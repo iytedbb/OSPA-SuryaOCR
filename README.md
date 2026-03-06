@@ -151,7 +151,7 @@ The easiest way to get started. It handles the database, Python environment, and
 ```bash
 # Clone the repository
 git clone https://github.com/iytedbb/OSPA-SuryaOCR.git
-cd ospa-suryaocr
+cd OSPA-SuryaOCR
 
 # Start the application
 docker-compose up --build
@@ -167,7 +167,7 @@ Wait for the "SuryaOCR Processor READY!" message. The web interface will be avai
 
 # Clone and enter the project
 git clone https://github.com/iytedbb/OSPA-SuryaOCR.git
-cd ospa-suryaocr
+cd OSPA-SuryaOCR
 
 # Sync dependencies
 uv sync

@@ -150,7 +150,7 @@ The easiest way to get started. It handles the database, Python environment, and
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/ospa-suryaocr.git
+git clone https://github.com/iytedbb/OSPA-SuryaOCR.git
 cd ospa-suryaocr
 
 # Start the application
@@ -166,7 +166,7 @@ Wait for the "SuryaOCR Processor READY!" message. The web interface will be avai
 # See: https://docs.astral.sh/uv/getting-started/installation/
 
 # Clone and enter the project
-git clone https://github.com/YOUR_USERNAME/ospa-suryaocr.git
+git clone https://github.com/iytedbb/OSPA-SuryaOCR.git
 cd ospa-suryaocr
 
 # Sync dependencies

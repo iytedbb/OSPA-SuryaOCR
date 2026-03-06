@@ -318,8 +318,9 @@ If you use this framework in your research, please cite:
   license   = {CC-BY-NC-4.0}
 }
 ```bibtex
-## License
 
+## License
+```bibtex
 This project is licensed under **CC BY-NC 4.0** (Creative Commons Attribution-NonCommercial 4.0 International).
 
 ## Support

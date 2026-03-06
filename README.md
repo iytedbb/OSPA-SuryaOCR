@@ -308,9 +308,7 @@ Digital Humanities and AI Lab
 If you use this framework in your research, please cite:
 @software{OSPA-SuryaOCR-2026,
   title     = {OSPA SuryaOCR - Advanced Document Processing Framework},
-  author    = {İlter, Mustafa and Onuç, Emre and Evecen, Doğan and
-               Erşahin, Buket and Özcan Gönülal, Yasemin and
-               Karabulut, Sezen and Berci, İbrahim and Tekir, Selma},
+  author    = {İlter, Mustafa and Onuç, Emre},
   year      = {2026},
   publisher = {GitHub},
   url       = {https://github.com/iytedbb/ospa-suryaocr},

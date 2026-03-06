@@ -317,7 +317,7 @@ If you use this framework in your research, please cite:
   note      = {Supported by TUBITAK Project No: 323K372. Built on Surya OCR 0.17 and DocLayout-YOLO},
   license   = {CC-BY-NC-4.0}
 }
-
+```bibtex
 ## License
 
 This project is licensed under **CC BY-NC 4.0** (Creative Commons Attribution-NonCommercial 4.0 International).

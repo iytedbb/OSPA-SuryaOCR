@@ -306,14 +306,15 @@ Digital Humanities and AI Lab
 ## Citation
 
 If you use this framework in your research, please cite:
+
+```bibtex
 @software{OSPA-SuryaOCR-2026,
   title     = {OSPA SuryaOCR - Advanced Document Processing Framework},
   author    = {İlter, Mustafa and Onuç, Emre},
   year      = {2026},
   publisher = {GitHub},
-  url       = {https://github.com/iytedbb/ospa-suryaocr},
-  note      = {Supported by TUBITAK Project No: 323K372.
-               Built on Surya OCR 0.17 and DocLayout-YOLO},
+  url       = {https://github.com/iytedbb/OSPA-SuryaOCR},
+  note      = {Supported by TUBITAK Project No: 323K372. Built on Surya OCR 0.17 and DocLayout-YOLO},
   license   = {CC-BY-NC-4.0}
 }
 

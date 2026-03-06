@@ -290,18 +290,8 @@ Project No: 323K372
 
 ### Contributors
 
-**Dr. Mustafa ILTER** - Izmir Institute of Technology (IYTE)
-Digital Humanities and AI Lab
-
-**Research Team:**
-
-- Dr. Dogan EVECEN - Izmir Institute of Technology
-- Dr. Buket ERSAHIN - Izmir Institute of Technology
-- Dr. Yasemin OZCAN GONULAL - Izmir Institute of Technology
-- Assoc. Prof. Selma TEKIR - Izmir Institute of Technology
-- Assoc. Prof. Sezen KARABULUT - Pamukkale University
-- Ibrahim BERCI - Pamukkale University
-- Emre ONUC - Pamukkale University
+- Dr. Mustafa İLTER - Izmir Institute of Technology 
+- Emre ONUÇ - Pamukkale University
 
 ## Citation
 

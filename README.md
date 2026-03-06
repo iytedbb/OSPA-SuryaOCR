@@ -328,4 +328,5 @@ This project is licensed under **CC BY-NC 4.0** (Creative Commons Attribution-No
 For issues, bug reports, or feature requests:
 
 - **Email**: mustafailter@iyte.edu.tr
-- **GitHub**: [github.com/iytedbb/ospa-suryaocr](https://github.com/iytedbb)
+- **GitHub**: [github.com/iytedbb/OSPA-SuryaOCR](https://github.com/iytedbb/OSPA-SuryaOCR)
+- **Hugging Face Models**: [huggingface.co/dbbiyte](https://huggingface.co/dbbiyte)

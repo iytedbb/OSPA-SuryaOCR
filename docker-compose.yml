@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  ocr:
+    build: .
+    container_name: surya_ocr_app
+    ports:
+      - "8000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./app/database/veriler:/app/data/veriler
+      - ./.env:/app/.env
+      - ./models_cache:/root/.cache
+    # Optional GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=surya_ocr_secret
+      - DB_NAME=ospa_suryaocr
+      - CUDA_VISIBLE_DEVICES=0
+    restart: always
+
+  db:
+    image: postgres:15-alpine
+    container_name: surya_ocr_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=surya_ocr_secret
+      - POSTGRES_DB=ospa_suryaocr
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432" # Exposed on 5435 to avoid conflict with local DB
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+volumes:
+  postgres_data:

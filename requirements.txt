@@ -1,0 +1,111 @@
+# SuryaOCR Production Dependencies with Preprocessing
+# ===================================================
+# Based on your existing pyproject.toml + preprocessing requirements
+
+# Core Web Framework
+Flask>=3.1.2
+Flask-CORS>=6.0.1
+Flask-SQLAlchemy>=3.1.1
+Flask-Migrate>=4.0.7
+
+# Production WSGI Server  
+gunicorn>=21.2.0
+
+# ML/AI Core - CUDA 12.6 specific versions
+# Note: These URLs are for Windows. Linux users should use regular pip install
+torch==2.7.1+cu126; sys_platform == "win32"
+torchvision==0.22.1+cu126; sys_platform == "win32"
+torchaudio==2.7.1+cu126; sys_platform == "win32"
+
+# For Linux/Mac - standard PyTorch
+torch>=2.7.1; sys_platform != "win32"
+torchvision>=0.22.1; sys_platform != "win32"
+torchaudio>=2.7.1; sys_platform != "win32"
+
+# SuryaOCR - specific version
+surya-ocr==0.17.0
+
+# Computer Vision
+opencv-python>=4.11.0.86
+opencv-python-headless>=4.11.0.86
+Pillow==10.4.0
+
+# Preprocessing Dependencies
+deskew>=1.5.3
+doclayout-yolo>=0.0.4
+py-reform>=0.1.0
+
+# Document Processing
+PyMuPDF>=1.26.4
+pdf2image>=1.17.0
+img2pdf>=0.6.1
+
+# YOLO for Layout Detection
+ultralytics>=8.3.0
+
+# Data Processing
+numpy<2.2.0
+scipy>=1.13.0
+psutil>=7.0.0
+
+# Text Processing & NLP
+transformers==4.57.3
+huggingface-hub>=0.35.0
+
+# Database Support
+SQLAlchemy>=2.0.43
+psycopg2-binary>=2.9.10
+
+# GUI Components (for PySide6 compatibility)
+PySide6>=6.9.3
+ttkbootstrap>=1.14.2
+
+# Text Similarity
+fuzzywuzzy>=0.18.0
+python-Levenshtein>=0.27.1
+
+# Utilities
+hf-xet>=1.1.10
+
+# Web Interface (optional Streamlit)
+streamlit>=1.50.0
+
+# Additional Production Dependencies
+python-dotenv>=1.0.0
+requests>=2.31.0
+tqdm>=4.66.0
+loguru>=0.7.0
+
+# Security
+itsdangerous>=2.1.0
+
+# File Handling
+openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+
+# System Monitoring
+py-cpuinfo>=9.0.0
+GPUtil>=1.4.0
+
+# Async Support
+aiofiles>=23.2.0
+
+# JSON Processing
+orjson>=3.9.0
+
+# HTTP Client
+httpx>=0.25.0
+
+# Timezone Support
+pytz>=2023.3
+
+# Memory Optimization
+memory-profiler>=0.61.0
+
+# Production Deployment
+python-multipart>=0.0.6
+Werkzeug>=3.0.1
+
+# Progress Bars
+alive-progress>=3.1.0
+

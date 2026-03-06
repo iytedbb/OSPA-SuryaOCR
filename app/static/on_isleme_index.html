@@ -1,0 +1,3058 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSPA OCR - Profesyonel Belge İşleme</title>
+    
+    <!-- Progressive Web App meta tags -->
+    <meta name="theme-color" content="#1a202c">
+    <meta name="description" content="YOLO tabanlı düzen tespiti ile profesyonel PDF belge işleme">
+    
+    <!-- Modern CSS with CSS Variables and Grid -->
+    <style>
+        :root {
+            /* Primary Reds - Professional Palette */
+            --primary-red: #DC143C;
+            --primary-red-dark: #B91C1C;
+            --primary-red-light: #EF4444;
+            --primary-red-50: #FEF2F2;
+            
+            /* Neutrals */
+            --white: oklch(1 0 0);
+            --gray-50: oklch(0.98 0 0);
+            --gray-100: oklch(0.95 0 0);
+            --gray-200: oklch(0.9 0 0);
+            --gray-800: oklch(0.2 0 0);
+            --gray-900: oklch(0.1 0 0);
+
+            /* Mapped Variables */
+            --primary-color: var(--primary-red);
+            --primary-hover: var(--primary-red-dark);
+            --secondary-color: #475569; /* Slate 600 */
+            --success-color: #16a34a; /* Green 600 */
+            --warning-color: #f59e0b; /* Amber 500 */
+            --error-color: var(--primary-red-dark);
+            --bg-primary: rgba(255, 255, 255, 0.85);
+            --bg-secondary: var(--gray-50);
+            --bg-tertiary: var(--gray-100);
+            --text-primary: var(--gray-900);
+            --text-secondary: #64748b; /* Slate 500 */
+            --border-color: var(--gray-200);
+
+            /* Typography */
+            --font-display: 'Space Grotesk', system-ui, sans-serif;
+            --font-body: 'Inter', system-ui, sans-serif;
+            
+            /* Advanced Shadow System */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-neural: 0 20px 40px -12px rgb(220 20 60 / 0.4);
+
+            /* Modern Radius System */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+
+            /* Advanced Transitions */
+            --ease-2: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+            --ease-4: cubic-bezier(0.680, -0.550, 0.265, 1.550);
+
+            --gradient-primary: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-red-dark) 100%);
+        }
+
+        /* Dark Mode Renk Paleti */
+        :root[data-theme='dark'] {
+            --bg-primary: rgba(17, 24, 39, 0.7); /* gray-900 */
+            --bg-secondary: #030712; /* gray-950 (daha koyu) */
+            --bg-tertiary: #1f2937; /* gray-800 */
+            --text-primary: var(--gray-100);
+            --text-secondary: #9ca3af; /* gray-400 */
+            --border-color: #374151; /* gray-700 */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* WebGL Canvas Styling */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.35;
+        }
+
+        /* Frosted Glass Effect with Backdrop Filter */
+        .header, .sidebar, .toolbar, .properties-panel, .notification, .processing-overlay {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-content {
+            display: flex;                 /* Öğeleri yan yana dizer */
+            justify-content: space-between; /* Logo sola, menü ortaya, kontroller sağa yaslar */
+            align-items: center;           /* Tüm öğeleri dikeyde ortalar */
+            max-width: 1400px;           /* Maksimum genişlik */
+            margin: 0 auto;              /* Ortalamak için */
+            padding: 0 var(--space-6);   /* Sağdan soldan boşluk (varsa) */
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem; /* index.html'den */
+            font-size: 1.5rem;   /* index.html'den */
+            font-weight: 800;    /* index.html'den */
+            color: var(--primary-red); /* index.html'den */
+            font-family: var(--font-display); /* index.html'den */
+            text-decoration: none;
+            transition: all var(--duration-2) var(--ease-2); /* index.html'den */
+        }
+
+        .logo:hover {
+            transform: scale(1.02); /* index.html'den */
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--gray-200); /* 1. Varsayılan gri durum */
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* 2. Başarılı bağlantı (Yeşil) */
+        .status-indicator.status-success .status-dot {
+            background: var(--success-color);
+            /* Başarıyı vurgulamak için hafif bir parlama efekti */
+            box-shadow: 0 0 6px 1px var(--success-color);
+        }
+        
+        /* 3. Başarısız bağlantı (Kırmızı) */
+        .status-indicator.status-error .status-dot {
+            background: var(--error-color);
+            /* Hatayı vurgulamak için hafif bir parlama efekti */
+            box-shadow: 0 0 6px 1px var(--error-color);
+        }
+
+        /* 4. Opsiyonel: Hata durumunda metin rengini de kırmızı yap */
+        .status-indicator.status-error span {
+            color: var(--error-color);
+            font-weight: 500;
+        }
+
+        .sidebar {
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .main-content {
+            display: flex; /* grid'den flex'e değiştirildi */
+            flex-direction: column; /* Dikey hizalama */
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .content-area {
+            flex: 1; /* Kalan tüm alanı doldurmasını sağlar */
+            display: grid;
+            grid-template-columns: 1fr 380px; /* Görüntü solda, panel sağda */
+            gap: 1rem;
+            margin-top: 1rem;
+            overflow: hidden; /* İçerik taşmasını önler */
+        }
+
+        .canvas-container {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: calc(100vh - 150px); /* Görseli yukarı çeker */
+            overflow: hidden;
+        }
+
+
+        .canvas-wrapper {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+            background: white;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .interactive-canvas {
+            display: block;
+            cursor: grab;
+            transition: transform 0.1s ease;
+        }
+
+        .interactive-canvas:active {
+            cursor: grabbing;
+        }
+
+        .properties-panel {
+            background: var(--bg-primary);
+            border-left: 1px solid var(--border-color);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        /* Sekmeli Ayar Paneli */
+        .properties-panel{
+        position: sticky; top: 0;
+        height: 100vh;
+        display: flex; flex-direction: column;
+        overflow: hidden; /* iç scroll'u alt kısma ver */
+        }
+
+        .tab-buttons{
+        display:flex; gap:0.5rem; margin:0 0 1rem 0;
+        border-bottom:1px solid var(--border-color);
+        }
+
+        .tab-button{
+        flex:1; text-align:center;
+        background: var(--bg-secondary);
+        border:1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding:0.5rem; font-weight:500; cursor:pointer;
+        transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .tab-button.active{
+        background: var(--primary-color);
+        color:#fff; border-color: var(--primary-color);
+        }
+
+        .tab-scroll{
+        /* status + tab bar sabit, içerik scroll */
+        flex:1; overflow-y:auto; padding-right: 0.25rem;
+        }
+
+        .tab-content{ display:none; padding-top:0.5rem; }
+        .tab-content.active{ display:block; }
+
+        /* Mevcut 'collapsible' görünürlükleri kapatıyoruz (sekmeli yapıda gerek yok) */
+        .collapsible-section, .collapsible-header, .collapsible-content{
+        display: none !important;
+        }
+
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+        }
+
+        .form-range {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-tertiary);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .form-range::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .form-range::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: none;
+        }
+
+        .form-checkbox {
+            margin-right: 0.5rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s var(--ease-4);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-red-dark) 100%);
+            color: white;
+            box-shadow: var(--shadow-neural);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Otomatik iyileştirme butonları için ek hover efekti (pasifken) */
+        #auto-enhance-btn.btn-secondary:hover,
+        #to-gray-btn.btn-secondary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn-error {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-icon {
+            padding: 0.75rem;
+            width: auto;
+        }
+
+        /* File Upload */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-color);
+            background: var(--bg-secondary);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.125rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Processing States */
+        .processing-overlay {
+            position: fixed; /* 'absolute' idi 'fixed' olarak değişti */
+            inset: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999; /* Yükseltildi */
+        }
+
+        :root[data-theme='dark'] .processing-overlay {
+            background: rgba(17, 24, 39, 0.95);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--bg-tertiary);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes icon-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        /* Real-time Preview Panel */
+        .preview-panel {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .preview-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        .preview-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .preview-item {
+            text-align: center;
+        }
+
+        .preview-image {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: white;
+        }
+
+        .preview-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Processing Status */
+        .status-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .status-value {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Collapsible Sections */
+        .collapsible-section {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        .collapsible-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .collapsible-content {
+            padding: 1rem;
+            display: none;
+        }
+
+        .collapsible-content.active {
+            display: block;
+        }
+
+        /* Split Line Styles */
+        .split-line {
+            stroke: #ef4444;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+            cursor: ew-resize;
+        }
+
+        .split-line:hover {
+            stroke-width: 3;
+        }
+
+        /* Crop Rectangle */
+        .crop-rectangle {
+            stroke: #ef4444;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+            fill: transparent;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            color: white;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            z-index: 1001;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            min-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: var(--success-color);
+        }
+
+        .notification.error {
+            background: var(--error-color);
+        }
+
+        .notification.warning {
+            background: var(--warning-color);
+        }
+
+        /* Progress Details */
+        .progress-details {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-top: 1rem;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0;
+            gap: 0.75rem;
+        }
+
+        .progress-step-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .progress-step.completed .progress-step-icon {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .progress-step.active .progress-step-icon {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .progress-step.pending .progress-step-icon {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .content-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .properties-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .toolbar {
+                padding: 1rem;
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* Value Display */
+        .value-display {
+            display: inline-block;
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Time Estimates */
+        .time-estimate {
+            background: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            text-align: center;
+            margin-top: 0.5rem;
+        }
+
+        /* YOLO Detection Status */
+        .yolo-status {
+            background: var(--success-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .yolo-status.single {
+            background: var(--secondary-color);
+        }
+
+        .yolo-status.double {
+            background: var(--warning-color);
+        }
+        /* 2. Yumuşak Tema Geçişi için Ana Elementlere Transition Ekleme */
+        body, .header, .sidebar, .toolbar, .properties-panel, 
+        .canvas-container, .upload-area, .collapsible-section,
+        .collapsible-header, .collapsible-content, .form-input, .form-select,
+        .btn-secondary, .status-indicator {
+            transition: background-color 0.3s var(--ease-2), 
+                        color 0.3s var(--ease-2), 
+                        border-color 0.3s var(--ease-2);
+        }
+
+        /* 1. İkon Boyutlandırma ve Hizalama */
+        .logo i {
+            font-size: 2rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: icon-spin 8s linear infinite;
+        }
+
+        .btn i {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-icon i {
+            width: 20px;
+            height: 20px;
+        }
+
+        .upload-icon i {
+            width: 48px;
+            height: 48px;
+            stroke-width: 1.5;
+        }
+        
+        .collapsible-icon i {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.3s var(--ease-2);
+        }
+
+        .collapsible-section.expanded .collapsible-icon i {
+            transform: rotate(180deg);
+        }
+        
+        /* 2. Collapsible (Açılır/Kapanır) Alan Animasyonu */
+        .collapsible-content {
+            padding: 0 1rem; /* Üst/alt padding'i kaldır */
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s var(--ease-2), 
+                        padding 0.3s var(--ease-2);
+        }
+
+        .collapsible-content.active {
+            padding: 1rem; /* Aktif olduğunda padding'i geri getir */
+            max-height: 1000px; /* İçeriğin sığacağı kadar büyük bir değer */
+        }
+        
+        /* 3. Tema Değiştirme Butonu Stilleri */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        #theme-toggle {
+            background: transparent;
+            border-color: transparent;
+            color: var(--text-secondary);
+        }
+
+        #theme-toggle:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        /* Tema butonundaki ikonları gizle/göster */
+        :root[data-theme='dark'] #theme-toggle .lucide-sun {
+            display: none;
+        }
+        :root:not([data-theme='dark']) #theme-toggle .lucide-moon {
+            display: none;
+        }
+
+        .header .nav-menu {
+            display: flex;
+            gap: 1rem; /* Butonlar arası boşluk */
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            align-items: center; /* Dikeyde ortalama */
+        }
+
+        .header .nav-item a { /* Linklerin genel görünümü */
+            color: var(--gray-700); /* Normal metin rengi */
+            text-decoration: none;
+            padding: 0.5rem 1rem; /* İç boşluk */
+            border-radius: var(--radius-2); /* Köşe yuvarlama */
+            transition: all 0.2s ease-in-out; /* Yumuşak geçiş */
+            font-weight: 600; /* Kalınlık */
+            font-family: var(--font-body); /* index.html ile aynı font */
+            font-size: 0.95rem; /* Yazı boyutu */
+        }
+
+        .header .nav-item a:hover { /* Üzerine gelince */
+            background-color: var(--gray-100); /* Hafif gri arka plan */
+            color: var(--primary-red); /* Kırmızı metin */
+        }
+
+        .header .nav-item.active a { /* Aktif sayfa linki */
+            background-color: var(--primary-red-50); /* Çok açık kırmızı arka plan */
+            color: var(--primary-red); /* Kırmızı metin */
+        }
+
+        .header .nav-item a { /* Mevcut kurala ekleme yapıyoruz */
+            /* ... (mevcut padding, color vs. özellikleri) ... */
+            position: relative; /* ::after için */
+            padding-bottom: 5px; /* Çizgi için yer */
+        }
+        
+        .header .nav-item a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; 
+            left: 0;
+            width: 0; 
+            height: 2px; 
+            background: var(--primary-red); 
+            transition: width 0.3s ease; 
+        }
+
+        .header .nav-item a:hover::after,
+        .header .nav-item.active a::after {
+            width: 100%; 
+        }
+
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <canvas id="neural-canvas"></canvas>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                
+                <a href="/" class="logo">
+                    <i class="fa-solid fa-eye"></i>
+                    <span>OSPA - Ön İşleme Aracı</span>
+                </a>
+
+
+                <ul class="nav-menu">
+                    <li class="nav-item"> 
+                        <a href="/" class="nav-link">Ana Sayfa</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/ocr" class="nav-link">SuryaOCR</a>
+                    </li>
+                    <li class="nav-item active"> 
+                        <a href="/preprocessing" class="nav-link">Ön İşleme Aracı</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="https://dbb.iyte.edu.tr/ospa.html" class="nav-link">Hakkımızda</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/contact" class="nav-link">İletişim</a>
+                    </li>
+                </ul>
+                
+                <div class="header-controls">
+                    <button class="btn btn-icon btn-secondary" id="theme-toggle" aria-label="Temayı Değiştir">
+                        <i data-lucide="sun"></i>
+                    </button>
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        <span id="system-status">Sistem Durumu Kontrol Ediliyor</span>
+                    </div>
+                </div>
+
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">
+                    <i data-lucide="upload-cloud"></i>
+                </div>
+                <div class="upload-text">PDF/Resim Yükle</div>
+                <div class="upload-hint">Sürükle bırak veya tıkla (PDF, JPG, PNG, TIFF)</div>
+                <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif" style="display: none;">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Dosya Bilgileri</label>
+                <div id="document-info">
+                    <div>Henüz dosya yüklenmedi</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Sayfa Navigasyonu</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-secondary btn-icon" id="prev-page" disabled><i data-lucide="chevron-left"></i></button>
+                    <div style="display: flex; align-items: center; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary);">
+                        <input type="text" id="page-current" value="0" style="width: 45px; text-align: center; border: none; background: transparent; padding: 0.5rem; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); border-radius: var(--radius-md) 0 0 var(--radius-md);">
+                        <span style="padding-right: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;">/ <span id="page-total">0</span></span>
+                    </div>
+                    <button class="btn btn-secondary btn-icon" id="next-page" disabled><i data-lucide="chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Zoom Kontrolleri</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-secondary btn-icon" id="zoom-out"><i data-lucide="zoom-out"></i></button>
+                    <span id="zoom-level">100%</span>
+                    <button class="btn btn-secondary btn-icon" id="zoom-in"><i data-lucide="zoom-in"></i></button>
+                    <button class="btn btn-secondary btn-icon" id="zoom-fit">Sığdır</button>
+                </div>
+            </div>
+
+            <!-- Real-time Preview -->
+            <div class="preview-panel" id="preview-panel" style="display: none;">
+                <div class="preview-title">Gerçek Zamanlı Önizleme</div>
+                <div class="preview-content">
+                    <div class="preview-item">
+                        <canvas class="preview-image" id="original-preview" width="150" height="120"></canvas>
+                        <div class="preview-label">Orijinal</div>
+                    </div>
+                    <div class="preview-item">
+                        <canvas class="preview-image" id="processed-preview" width="150" height="120"></canvas>
+                        <div class="preview-label">İşlenmiş</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- YOLO Detection Status -->
+            <div class="form-group" id="yolo-detection" style="display: none;">
+                <label class="form-label">YOLO Tespit Durumu</label>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="yolo-status" id="page-type-status">Analiz ediliyor...</span>
+                    <span id="split-position-info"></span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <button class="btn btn-primary" id="process-btn" disabled>
+                    <i data-lucide="zap"></i>
+                    <span>Belgeyi İşle</span>
+                </button>
+                <button class="btn btn-secondary" id="preview-toggle">
+                    <i data-lucide="eye"></i>
+                    <span>Canlı Önizleme</span>
+                </button>
+                <button class="btn btn-secondary" id="download-btn" disabled>
+                    <i data-lucide="download"></i>
+                    <span>İndir</span>
+                </button>
+                <button class="btn btn-primary" id="continue-to-ocr-btn" style="display: none;">
+                    <i data-lucide="arrow-right-circle"></i>
+                    <span>Ocr Sayfasına Devam Et</span>
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Canvas Container (üstte görüntü alanı) -->
+                <div class="canvas-container">
+                    <div class="canvas-wrapper">
+                        <canvas id="main-canvas" class="interactive-canvas" width="700" height="500"></canvas>
+                        <svg id="overlay-svg" style="position: absolute; top: 0; left: 0; pointer-events: none;">
+                            <!-- Split line and crop rectangle will be drawn here -->
+                        </svg>
+                    </div>
+
+                    <!-- Processing Overlay -->
+                    <div class="processing-overlay" id="processing-overlay" style="display: none;">
+                        <div class="spinner"></div>
+                        <div id="processing-message">Belge işleniyor...</div>
+                        <div class="progress-container" style="width: 400px;">
+                            <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+                        </div>
+                        <div id="progress-text">0%</div>
+
+                        <!-- Processing Steps -->
+                        <div class="progress-details">
+                            <div class="progress-step pending" id="step-upload">
+                                <div class="progress-step-icon">1</div>
+                                <div>Dosya yükleniyor</div>
+                            </div>
+                            <div class="progress-step pending" id="step-analysis">
+                                <div class="progress-step-icon">2</div>
+                                <div>YOLO analizi yapılıyor</div>
+                            </div>
+                            <div class="progress-step pending" id="step-processing">
+                                <div class="progress-step-icon">3</div>
+                                <div>Sayfalar işleniyor</div>
+                            </div>
+                            <div class="progress-step pending" id="step-complete">
+                                <div class="progress-step-icon">4</div>
+                                <div>Sonuçlar hazırlanıyor</div>
+                            </div>
+                        </div>
+                        <!-- Geçen Zaman -->
+                        <div class="time-estimate" id="elapsed-time-counter" style="background: var(--bg-tertiary); margin-bottom: 0.5rem;">
+                            İşlem Süresi: 00:00:00
+                        </div>
+                        <!-- Time Estimate -->
+                        <div class="time-estimate" id="time-estimate">
+                            Tahmini kalan süre: Hesaplanıyor...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sağdaki Ayar Paneli -->
+                <div class="properties-panel" id="properties-panel">
+                    <h3 id="properties-panel-title" style="margin-bottom: 1rem;">İşleme Ayarları</h3>
+
+                    <div id="results-panel" style="display: none;">
+                        </div>
+
+                    <!-- Status (Aynen korunur) -->
+                    <div class="status-panel" id="status-panel" style="display: none;">
+                        <div class="status-item">
+                        <span class="status-label">Mevcut Sayfa</span>
+                        <span class="status-value" id="current-page-status">-</span>
+                        </div>
+                        <div class="status-item">
+                        <span class="status-label">İşlem Durumu</span>
+                        <span class="status-value" id="processing-status">Hazır</span>
+                        </div>
+                        <div class="status-item">
+                        <span class="status-label">Tahmini Süre</span>
+                        <span class="status-value" id="estimated-time">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Sekmeler -->
+                    <div class="tab-buttons">
+                        <div class="tab-button active" data-target="tab-goruntu">Görüntü</div>
+                        <div class="tab-button" data-target="tab-gelismis">Gelişmiş</div>
+                        <div class="tab-button" data-target="tab-cikti">Çıktı</div>
+                    </div>
+
+                    <div class="tab-scroll">
+<div class="tab-content active" id="tab-goruntu">
+                            <div class="form-group">
+                                <button id="auto-enhance-btn" class="btn btn-secondary w-full flex items-center justify-center gap-2" style="width:100%;" title="Otomatik kontrast/parlaklık ayarları uygulanır: Osmanlıca Belgelerde kullanımı önerilmez.">
+                                    <i data-lucide="magic" class="w-4 h-4"></i>
+                                    <span>Otomatik İyileştir</span>
+                                </button>
+                            </div>
+                            
+                            <div class="form-group mt-2">
+                                <button id="to-gray-btn" class="btn btn-secondary w-full flex items-center justify-center gap-2" style="width:100%;" title="Belgeyi otomatik olarak siyah-beyaz yapar: Sararmış belgeler için önerilir.">
+                                    <i data-lucide="contrast" class="w-4 h-4"></i>
+                                    <span>Otomatik Siyah-Beyaz</span>
+                                </button>
+                            </div>
+
+                            <div class="form-group" style="display: none;">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" class="form-checkbox" id="grayscale-enable">
+                                    <label class="form-label" for="grayscale-enable">Siyah-Beyaz (Grayscale)</label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Kontrast</label>
+                                <input type="range" class="form-range" id="contrast" min="0.5" max="3.0" step="0.1" value="1.0">
+                                <span class="value-display" id="contrast-value">1.0</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Parlaklık</label>
+                                <input type="range" class="form-range" id="brightness" min="0.5" max="2.0" step="0.1" value="1.3">
+                                <span class="value-display" id="brightness-value">1.3</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Keskinlik</label>
+                                <input type="range" class="form-range" id="sharpness" min="0.5" max="3.0" step="0.1" value="1.0">
+                                <span class="value-display" id="sharpness-value">1.0</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Doygunluk</label>
+                                <input type="range" class="form-range" id="saturation" min="0.5" max="3.0" step="0.1" value="1.0">
+                                <span class="value-display" id="saturation-value">1.0</span>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" id="tab-gelismis">
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                            <input type="checkbox" class="form-checkbox" id="py-reform-enable" checked>
+                            <label class="form-label" for="py-reform-enable">py-reform (Eğrilik Düzeltme)</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                            <input type="checkbox" class="form-checkbox" id="doclayout-enable" checked>
+                            <label class="form-label" for="doclayout-enable">YOLO Tespit</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">İşleme Cihazı</label>
+                            <select class="form-select" id="device-select">
+                            <option value="cuda">CUDA (GPU)</option>
+                            <option value="cpu">CPU</option>
+                            </select>
+                        </div>
+                        </div>
+
+                        <!-- Çıktı Ayarları -->
+                        <div class="tab-content" id="tab-cikti">
+                        <div class="form-group">
+                            <label class="form-label">Çıktı Formatı</label>
+                            <select class="form-select" id="output-format">
+                            <option value="pdf">PDF</option>
+                            <option value="png">PNG</option>
+                            <option value="jpg">JPG</option>
+                            <option value="tiff">TIFF</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">DPI (Çözünürlük)</label>
+                            <select class="form-select" id="output-dpi">
+                            <option value="150">150 DPI</option>
+                            <option value="300" selected>300 DPI</option>
+                            <option value="600">600 DPI</option>
+                            <option value="1200">1200 DPI</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sayfa Sırası</label>
+                            <select class="form-select" id="page-order">
+                            <option value="sol-sag">Sol-Sağ (Latin)</option>
+                            <option value="sag-sol">Sağ-Sol (Osmanlıca)</option>
+                            </select>
+                        </div>
+                        </div>
+
+                    </div><!-- /.tab-scroll -->
+                    </div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <!-- JavaScript Application -->
+    <script>
+        class NeuralNetworkVisualization {
+            constructor() {
+                this.canvas = document.getElementById('neural-canvas');
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.nodes = [];
+                this.connections = [];
+            }
+
+            initialize() {
+                if (!this.canvas || !window.THREE) return;
+                
+                this.setupScene();
+                this.createNodes();
+                this.createConnections();
+                this.animate();
+            }
+
+            setupScene() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ 
+                    canvas: this.canvas, 
+                    alpha: true,
+                    antialias: true 
+                });
+                
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setClearColor(0x000000, 0);
+                
+                this.camera.position.z = 5;
+                
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 10, 5);
+                this.scene.add(directionalLight);
+            }
+
+            createNodes() {
+                const nodeGeometry = new THREE.SphereGeometry(0.03, 12, 12);
+                const nodeMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xDC143C,
+                    shininess: 100,
+                    transparent: true,
+                    opacity: 0.6
+                });
+
+                for (let i = 0; i < 25; i++) {
+                    const node = new THREE.Mesh(nodeGeometry, nodeMaterial);
+                    
+                    node.position.x = (Math.random() - 0.5) * 10;
+                    node.position.y = (Math.random() - 0.5) * 6;
+                    node.position.z = (Math.random() - 0.5) * 4;
+                    
+                    node.userData = {
+                        originalPosition: node.position.clone(),
+                        speed: Math.random() * 0.02 + 0.01,
+                        phase: Math.random() * Math.PI * 2
+                    };
+                    
+                    this.nodes.push(node);
+                    this.scene.add(node);
+                }
+            }
+
+            createConnections() {
+                const connectionMaterial = new THREE.LineBasicMaterial({ 
+                    color: 0xB91C1C,
+                    transparent: true,
+                    opacity: 0.25
+                });
+
+                for (let i = 0; i < this.nodes.length; i++) {
+                    for (let j = i + 1; j < this.nodes.length; j++) {
+                        const distance = this.nodes[i].position.distanceTo(this.nodes[j].position);
+                        
+                        if (distance < 2 && Math.random() < 0.2) {
+                            const geometry = new THREE.BufferGeometry();
+                            const positions = new Float32Array([
+                                this.nodes[i].position.x, this.nodes[i].position.y, this.nodes[i].position.z,
+                                this.nodes[j].position.x, this.nodes[j].position.y, this.nodes[j].position.z
+                            ]);
+                            
+                            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                            const line = new THREE.Line(geometry, connectionMaterial);
+                            
+                            this.connections.push({
+                                line: line,
+                                nodeA: this.nodes[i],
+                                nodeB: this.nodes[j]
+                            });
+                            
+                            this.scene.add(line);
+                        }
+                    }
+                }
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                const time = Date.now() * 0.001;
+                
+                this.nodes.forEach(node => {
+                    const { originalPosition, speed, phase } = node.userData;
+                    node.position.y = originalPosition.y + Math.sin(time * speed + phase) * 0.2;
+                    node.rotation.y += 0.01;
+                    
+                    const scale = 1 + Math.sin(time * 2 + phase) * 0.2;
+                    node.scale.setScalar(scale);
+                });
+                
+                this.connections.forEach(connection => {
+                    const positions = connection.line.geometry.attributes.position.array;
+                    positions[0] = connection.nodeA.position.x;
+                    positions[1] = connection.nodeA.position.y;
+                    positions[2] = connection.nodeA.position.z;
+                    positions[3] = connection.nodeB.position.x;
+                    positions[4] = connection.nodeB.position.y;
+                    positions[5] = connection.nodeB.position.z;
+                    connection.line.geometry.attributes.position.needsUpdate = true;
+                });
+                
+                this.scene.rotation.y += 0.0005;
+                
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        class GelismissPDFOCR {
+            constructor() {
+                this.apiBase = '/preprocessing/api'; // Add the blueprint prefix
+                this.initialFilePath = null; // To store the path from the URL
+                this.initialUploadJobId = null; // Store the original upload job ID if passed
+                this.currentJobId = null; // This will now be the PREPROCESSING job ID
+                this.currentPage = 0;
+                this.totalPages = 0;
+                this.zoomFactor = 1.0;
+                this.panX = 0;
+                this.panY = 0;
+                this.isDragging = false;
+                this.lastMouseX = 0;
+                this.lastMouseY = 0;
+                this.splitPosition = null;
+                this.currentImage = null;
+                this.previewMode = true; 
+                this.processingStartTime = null;
+                this.elapsedTimeInterval = null;
+                
+                this.initializeElements();
+                this.setupEventListeners();
+                this.checkUrlForFile();
+                this.checkSystemStatus();
+                this.setupCollapsibleSections();
+                this.setupRealTimePreview();
+                this.setupThemeToggle();
+                this.setupKeyboardShortcuts();
+            }
+
+            checkUrlForFile() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const filePath = urlParams.get('file_path');
+                const uploadJobId = urlParams.get('upload_job_id'); // Optional original ID
+
+                if (filePath) {
+                    this.initialFilePath = decodeURIComponent(filePath);
+                    this.initialUploadJobId = uploadJobId; // Store if present
+                    console.log("Received file path from URL:", this.initialFilePath);
+
+                    // Hide the upload area
+                    if (this.uploadArea) {
+                        this.uploadArea.style.display = 'none';
+                    }
+
+                    // Simulate file upload completion using the received path
+                    this.handleFileProvided(this.initialFilePath);
+
+                } else {
+                    console.log("No file path found in URL. Waiting for upload.");
+                    // Show the upload area if no file path is provided
+                    if (this.uploadArea) {
+                        this.uploadArea.style.display = 'block';
+                    }
+                }
+                // Clean the URL parameters after reading them
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            initializeElements() {
+                // Canvas elements
+                this.canvas = document.getElementById('main-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.overlaySvg = document.getElementById('overlay-svg');
+                
+                // Preview canvases
+                this.originalPreview = document.getElementById('original-preview');
+                this.processedPreview = document.getElementById('processed-preview');
+                this.originalPreviewCtx = this.originalPreview.getContext('2d');
+                this.processedPreviewCtx = this.processedPreview.getContext('2d');
+                
+                // UI elements
+                this.uploadArea = document.getElementById('upload-area');
+                this.fileInput = document.getElementById('file-input');
+                this.documentInfo = document.getElementById('document-info');
+                
+                // --- Değiştirilen Sayfa Navigasyonu Elemanları ---
+                // this.pageInfo = document.getElementById('page-info'); // Bu satırı silin
+                this.pageCurrentInput = document.getElementById('page-current');
+                this.pageTotalSpan = document.getElementById('page-total');
+                // --- Değişiklik Sonu ---
+
+                this.zoomLevel = document.getElementById('zoom-level');
+                this.processingOverlay = document.getElementById('processing-overlay');
+                this.progressBar = document.getElementById('progress-bar');
+                this.progressText = document.getElementById('progress-text');
+                this.processingMessage = document.getElementById('processing-message');
+                this.timeEstimate = document.getElementById('time-estimate');
+                this.elapsedTimeCounter = document.getElementById('elapsed-time-counter');
+                
+                // Status elements
+                this.statusPanel = document.getElementById('status-panel');
+                this.currentPageStatus = document.getElementById('current-page-status');
+                this.processingStatus = document.getElementById('processing-status');
+                this.estimatedTime = document.getElementById('estimated-time');
+                
+                // YOLO elements
+                this.yoloDetection = document.getElementById('yolo-detection');
+                this.pageTypeStatus = document.getElementById('page-type-status');
+                this.splitPositionInfo = document.getElementById('split-position-info');
+                
+                // Buttons
+                this.processBtn = document.getElementById('process-btn');
+                this.previewToggle = document.getElementById('preview-toggle');
+                this.downloadBtn = document.getElementById('download-btn');
+                this.continueToOcrBtn = document.getElementById('continue-to-ocr-btn'); // YENİ EKLENDİ
+                this.prevPageBtn = document.getElementById('prev-page');
+                this.nextPageBtn = document.getElementById('next-page');
+                this.zoomInBtn = document.getElementById('zoom-in');
+                this.zoomOutBtn = document.getElementById('zoom-out');
+                this.zoomFitBtn = document.getElementById('zoom-fit');
+                
+                // Preview panel
+                this.previewPanel = document.getElementById('preview-panel');
+                
+                //  DURUM (STATE) DEĞİŞKENLERİ ---
+                this.isProcessedState = false; // İşlenmiş belge modunda mıyız?
+                this.isWheelPaging = false; // Tekerlek ile sayfa geçişi için gecikme
+
+                // Settings
+                this.setupSettingsControls();
+
+                // Canlı Önizleme'yi varsayılan olarak AKTİF ET ---
+                if (this.previewMode) {
+                    this.previewToggle.classList.add('btn-primary');
+                    this.previewToggle.classList.remove('btn-secondary');
+                    this.previewPanel.style.display = 'block';
+                }
+            }
+
+            setupSettingsControls() {
+                // Range inputs with value display
+                const ranges = ['contrast', 'brightness', 'sharpness', 'saturation'];
+                ranges.forEach(range => {
+                    const input = document.getElementById(range);
+                    const value = document.getElementById(`${range.replace('-', '')}-value`);
+                    
+                    if (input && value) {
+                        input.addEventListener('input', () => {
+                            if (range === 'rotation-angle') {
+                                value.textContent = input.value + '°';
+                            } else {
+                                value.textContent = parseFloat(input.value).toFixed(1);
+                            }
+                            this.updateRealTimePreview();
+                        });
+                    }
+                });
+                
+                // Checkbox listeners for real-time preview
+                const checkboxes = ['py-reform-enable', 'grayscale-enable'];
+                
+                // Select listeners
+                const selects = ['output-format', 'device-select'];
+                selects.forEach(select => {
+                    const element = document.getElementById(select);
+                    if (element) {
+                        element.addEventListener('change', () => {
+                            this.updateRealTimePreview();
+                        });
+                    }
+                });
+
+
+                // --- GÜNCELLENEN BLOK BAŞLANGICI ---
+
+                // ✨ Otomatik İyileştir Butonu (TOGGLE MANTIĞI)
+                const autoBtn = document.getElementById("auto-enhance-btn");
+                if (autoBtn) {
+                    autoBtn.addEventListener("click", () => {
+                        const app = window.appInstance;
+                        if (!app) return; // Güvenlik kontrolü
+
+                        // HTML'deki varsayılan değerleri tanımla (sıfırlama için)
+                        const defaults = {
+                            contrast: 1.0,
+                            brightness: 1.3, // HTML'deki varsayılan değer
+                            sharpness: 1.0,
+                            saturation: 1.0,
+                            // threshold_enable: false, // KALDIRILDI
+                            // edge_enhance_enable: false, // KALDIRILDI
+                            py_reform_enable: true, // HTML'deki varsayılan değer
+                            doclayout_enable: true // HTML'deki varsayılan değer
+                        };
+
+                        // İyileştirme ayarları
+                        const enhanceSettings = {
+                            contrast: 1.2,
+                            brightness: 1.3,
+                            sharpness: 1.1,
+                            saturation: 1.0,
+                            // threshold_enable: false, // KALDIRILDI
+                            // edge_enhance_enable: true, // KALDIRILDI
+                            py_reform_enable: true,
+                            doclayout_enable: true
+                        };
+                        
+                        // Fonksiyon: Ayarları uygula ve göstergeleri güncelle
+                        const applySettings = (settings) => {
+                            document.getElementById("contrast").value = settings.contrast;
+                            document.getElementById("brightness").value = settings.brightness;
+                            document.getElementById("sharpness").value = settings.sharpness;
+                            document.getElementById("saturation").value = settings.saturation;
+
+                            // document.getElementById("threshold-enable").checked = settings.threshold_enable; // KALDIRILDI
+                            // document.getElementById("edge-enhance-enable").checked = settings.edge_enhance_enable; // KALDIRILDI
+                            document.getElementById("py-reform-enable").checked = settings.py_reform_enable;
+                            document.getElementById("doclayout-enable").checked = settings.doclayout_enable;
+
+                            // Değer göstergelerini güncelle
+                            document.getElementById("contrast-value").textContent = settings.contrast.toFixed(1);
+                            document.getElementById("brightness-value").textContent = settings.brightness.toFixed(1);
+                            document.getElementById("sharpness-value").textContent = settings.sharpness.toFixed(1);
+                            document.getElementById("saturation-value").textContent = settings.saturation.toFixed(1);
+                        };
+
+                        // Durumu (klas) kontrol et ve geçiş yap
+                        if (autoBtn.classList.contains('btn-secondary')) {
+                            // --- AKTİF ET ---
+                            applySettings(enhanceSettings);
+                            
+                            // Stili güncelle
+                            autoBtn.classList.remove("btn-secondary");
+                            autoBtn.classList.add("btn-primary");
+                            app.showNotification("✨ Otomatik iyileştirme Aktif!", "success");
+
+                        } else {
+                            // --- DEVRE DIŞI BIRAK (Sıfırla) ---
+                            applySettings(defaults);
+                            
+                            // Stili güncelle
+                            autoBtn.classList.remove("btn-primary");
+                            autoBtn.classList.add("btn-secondary");
+                            app.showNotification("Otomatik iyileştirme Sıfırlandı.", "success");
+                        }
+                        
+                        // Önizlemeyi zorla (tıpkı to-gray-btn gibi)
+                        if (!app.previewMode) {
+                            app.previewMode = true;
+                            app.previewToggle.classList.remove('btn-secondary');
+                            app.previewToggle.classList.add('btn-primary');
+                            app.previewPanel.style.display = 'block';
+                        }
+                        
+                        // Canlı önizlemeyi tetikle
+                        app.updateRealTimePreview();
+                    });
+                }
+                
+                // --- GÜNCELLENEN BLOK SONU ---
+
+
+                // 🖤 Otomatik Siyah-Beyaz (ToGray) Butonu (Toggle Logic + Force Preview)
+                const grayBtn = document.getElementById("to-gray-btn");
+                if (grayBtn) {
+                    grayBtn.addEventListener("click", () => {
+                        const checkbox = document.getElementById("grayscale-enable");
+                        const app = window.appInstance;
+                        
+                        if (!app) return; // Güvenlik kontrolü
+
+                        // 1. Durumu tersine çevir (Açıksa kapat, kapalıysa aç)
+                        checkbox.checked = !checkbox.checked;
+
+                        // 2. Butonun stilini (aktif/pasif) güncelle
+                        if (checkbox.checked) {
+                            // Aktif (Kırmızı)
+                            grayBtn.classList.remove("btn-secondary");
+                            grayBtn.classList.add("btn-primary");
+                            app.showNotification("🖤 Otomatik Siyah-Beyaz dönüştürme Aktif!", "success");
+                        } else {
+                            // Pasif (Normal)
+                            grayBtn.classList.remove("btn-primary");
+                            grayBtn.classList.add("btn-secondary");
+                            app.showNotification("Siyah-Beyaz dönüştürme Devre Dışı.", "success");
+                        }
+                        
+                        // 3. YENİ: Canlı önizlemenin kapalı olup olmadığını kontrol et
+                        if (!app.previewMode) {
+                            // Kapalıysa, "Canlı Önizleme" modunu manuel olarak AÇ
+                            // (app.togglePreviewMode() fonksiyonunun içindeki mantığı yapıyoruz)
+                            app.previewMode = true;
+                            app.previewToggle.classList.remove('btn-secondary');
+                            app.previewToggle.classList.add('btn-primary');
+                            app.previewPanel.style.display = 'block';
+                        }
+
+                        // 4. Canlı önizlemeyi tetikle (artık açık olduğu garanti)
+                        app.updateRealTimePreview();
+                    });
+                }
+
+            }
+
+            setupEventListeners() {
+                // File upload
+                this.uploadArea.addEventListener('click', () => this.fileInput.click());
+                this.uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
+                this.uploadArea.addEventListener('drop', this.handleDrop.bind(this));
+                this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+                
+                // Canvas interactions
+                this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+                this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+                this.canvas.addEventListener('wheel', this.handleWheel.bind(this));
+                this.canvas.addEventListener('dblclick', this.handleDoubleClick.bind(this));
+                
+                // Button events
+                this.processBtn.addEventListener('click', this.processDocument.bind(this));
+                this.previewToggle.addEventListener('click', this.togglePreviewMode.bind(this));
+                this.downloadBtn.addEventListener('click', this.downloadResults.bind(this));
+                this.continueToOcrBtn.addEventListener('click', this.redirectToOcr.bind(this)); // YENİ EKLENDİ
+                
+                // Navigation
+                this.prevPageBtn.addEventListener('click', () => this.changePage(-1));
+                this.nextPageBtn.addEventListener('click', () => this.changePage(1));
+                
+                // Zoom controls
+                this.zoomInBtn.addEventListener('click', () => this.zoom(1.2));
+                this.zoomOutBtn.addEventListener('click', () => this.zoom(1/1.2));
+                this.zoomFitBtn.addEventListener('click', this.fitToCanvas.bind(this));
+
+                // --- YENİ EKLENDİ: Sayfa Giriş Kutusu Dinleyicisi ---
+                this.pageCurrentInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.jumpToPage();
+                        e.target.blur(); // Odaklanmayı kaldır
+                    }
+                });
+            }
+
+            setupCollapsibleSections() {
+                const sections = document.querySelectorAll('.collapsible-section');
+                sections.forEach(section => {
+                    const header = section.querySelector('.collapsible-header');
+                    const content = section.querySelector('.collapsible-content');
+                    
+                    header.addEventListener('click', () => {
+                        section.classList.toggle('expanded');
+                        content.classList.toggle('active');
+                    });
+                });
+            }
+
+            setupRealTimePreview() {
+                // Initialize preview canvases
+                this.updateRealTimePreview();
+            }
+
+            async checkSystemStatus() {
+                // Gerekli HTML elementlerini en başta seçiyoruz
+                const statusIndicator = document.querySelector('.status-indicator');
+                const statusText = document.getElementById('system-status');
+
+                // Elementler bulunamazsa hatayı önlemek için dur
+                if (!statusIndicator || !statusText) return; 
+
+                try {
+                    
+                    const response = await fetch(`${this.apiBase}/status`);
+                    
+                    // Sunucudan 404, 500 gibi bir hata dönerse (sunucu çökmesi vb.)
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const status = await response.json();
+                    
+                    // --- BAŞARILI DURUM ---
+                    statusText.textContent = 
+                        `Sistem Hazır - CUDA: ${status.cuda_available ? 'Aktif' : 'Devre Dışı'}`;
+                    
+                    // CSS sınıflarını ayarla
+                    statusIndicator.classList.remove('status-error');
+                    statusIndicator.classList.add('status-success');
+
+                    // Update device selector
+                    const deviceSelect = document.getElementById('device-select');
+                    if (!status.cuda_available) {
+                        deviceSelect.innerHTML = '<option value="cpu">CPU</option>';
+                    }
+
+                } catch (error) {
+                    // --- BAŞARISIZ DURUM (fetch hatası veya sunucuya ulaşılamaması) ---
+                    console.error('Status check failed:', error);
+                    
+                    // Metni güncelle
+                    statusText.textContent = 'Bağlantı kurulamadı';
+                    
+                    // CSS sınıflarını ayarla
+                    statusIndicator.classList.remove('status-success');
+                    statusIndicator.classList.add('status-error');
+
+                    // Bildirim (bu satır zaten mevcuttu)
+                    this.showNotification('Sistem kontrolü başarısız', 'error');
+                }
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                this.uploadArea.classList.add('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                this.uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    this.handleFile(files[0]);
+                }
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.handleFile(file);
+                }
+            }
+
+            // --- FUNCTION TO MODIFY: handleFile ---
+            async handleFile(file) {
+                const supportedTypes = ['.pdf', '.jpg', '.jpeg', '.png', '.tiff', '.tif'];
+                const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+
+                if (!supportedTypes.includes(fileExtension)) {
+                    this.showNotification('Desteklenen formatlar: PDF, JPG, PNG, TIFF', 'error');
+                    return;
+                }
+
+                // Reset state
+                this.isProcessedState = false;
+                this.resetPropertiesPanel();
+                this.downloadBtn.disabled = true;
+                this.processBtn.disabled = true;
+                if (this.continueToOcrBtn) this.continueToOcrBtn.style.display = 'none'; // YENİ EKLENDİ
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    this.showProcessing(true, 'Dosya yükleniyor (Ön İşleme)...');
+                    this.updateProcessingStep('step-upload', 'active');
+
+                    // --- MODIFICATION: Use the correct upload endpoint ---
+                    const response = await fetch(`${this.apiBase}/upload`, { // Use this.apiBase
+                        method: 'POST',
+                        body: formData
+                    });
+                    // --- END MODIFICATION ---
+
+                    if (!response.ok) {
+                        // ... (existing error handling) ...
+                        throw new Error(errorMessage);
+                    }
+
+                    const result = await response.json();
+                    
+                    this.handleFileProvided(result.file_path, result.job_id); // Pass job_id too
+                    // --- END MODIFICATION ---
+
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    this.showNotification('Yükleme başarısız: ' + error.message, 'error');
+                    this.showProcessing(false); // Hide processing on error
+                } finally {
+                    // Let handleFileProvided manage the processing overlay hiding
+                    // this.showProcessing(false);
+                }
+            }
+
+            async handleFileProvided(filePath, uploadJobId = null) {
+                if (!filePath) {
+                    this.showNotification("Geçerli bir dosya yolu alınamadı.", "error");
+                    return;
+                }
+
+                this.initialFilePath = filePath; // Store the path being used
+                this.currentJobId = uploadJobId; // Use the provided job ID (might be null if from URL directly)
+                this.totalPages = 1; // Assume 1 page initially, preview will update
+                this.currentPage = 0;
+
+                // Extract filename for display
+                const filename = filePath.split(/[\\/]/).pop();
+
+                // Simulate upload result structure for consistency
+                const simulatedUploadResult = {
+                    job_id: this.currentJobId || "N/A", // Use N/A if no ID
+                    filename: filename,
+                    page_count: this.totalPages, // Will be updated by preview
+                };
+
+                this.updateDocumentInfo(simulatedUploadResult);
+                this.updatePageInfo();
+                this.enableControls(); // Enable process button etc.
+                this.showStatusPanel();
+                this.updateProcessingStep('step-upload', 'completed'); // Mark upload as done
+
+                try {
+                    this.showProcessing(true, 'İlk sayfa önizlemesi yükleniyor...');
+                    await this.loadPagePreview(); // Load the preview using the path
+                    this.showNotification(`Dosya hazır: ${filename}`, 'success');
+                } catch(error) {
+                    this.showNotification(`Önizleme yüklenemedi: ${error.message}`, 'error');
+                } finally {
+                    this.showProcessing(false);
+                }
+            }
+
+            async loadPagePreview() {
+                if (!this.initialFilePath) {
+                    console.warn("loadPagePreview called without initialFilePath.");
+                    return; // Don't proceed if the file path isn't set
+                }
+
+                let apiUrl = '';
+                const requestBody = {
+                    file_path: this.initialFilePath, // Send the file path
+                    page_num: this.currentPage
+                };
+
+                if (this.isProcessedState) {
+                    // Need the *preprocessing* job ID to get processed page
+                    apiUrl = `${this.apiBase}/job/${this.currentJobId}/processed_page/${this.currentPage}`;
+                    // Processed state might not need a request body, adjust if necessary
+                } else {
+                    apiUrl = `${this.apiBase}/job/preview_from_path`; // NEW Endpoint needed in backend
+
+                }
+
+
+                try {
+                    let response;
+                    if (this.isProcessedState) {
+                        // GET request for processed page preview seems more appropriate
+                        response = await fetch(apiUrl);
+                    } else {
+                        // POST request for preview from path
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(requestBody)
+                        });
+                    }
+
+
+                    if (!response.ok) {
+                        // ... (existing error handling) ...
+                        throw new Error(errorMessage);
+                    }
+
+                    const data = await response.json();
+
+                    // Update total pages if backend provides it
+                    if (data.page_count && data.page_count !== this.totalPages) {
+                        this.totalPages = data.page_count;
+                        this.updatePageInfo();
+                    }
+
+                    await this.displayImage(data.image);
+
+                    // Show YOLO info only in unprocessed state
+                    if (!this.isProcessedState && data.page_type) {
+                        this.showYoloDetection(data.page_type, data.split_position);
+                        if (data.page_type === 'double' && data.split_position) {
+                            this.splitPosition = data.split_position;
+                            // Automatically enable split if YOLO detects double page? Maybe optional.
+                            // document.getElementById('split-enable').checked = true;
+                            this.updateSplitLine();
+                        } else {
+                            this.splitPosition = null;
+                            // document.getElementById('split-enable').checked = false;
+                            this.updateOverlay(); // Clear split line if not double
+                        }
+                    } else if (this.isProcessedState) {
+                        this.yoloDetection.style.display = 'none'; // Hide YOLO panel
+                        this.splitPosition = null; // Clear split position
+                        this.updateOverlay(); // Clear split line
+                    }
+
+                    this.updateCurrentPageStatus();
+                    this.updateRealTimePreview(); // Update mini previews
+
+                    // Mark analysis step complete (only if not already processed)
+                    if (!this.isProcessedState) {
+                        this.updateProcessingStep('step-analysis', 'completed');
+                    }
+
+                } catch (error) {
+                    console.error('Preview loading error:', error);
+                    this.showNotification('Önizleme yüklenemedi: ' + error.message, 'error');
+                }
+            }
+            // --- END FUNCTION MODIFICATION ---
+
+            showYoloDetection(pageType, splitPosition) {
+                this.yoloDetection.style.display = 'block';
+                
+                this.pageTypeStatus.textContent = this.getPageTypeText(pageType);
+                this.pageTypeStatus.className = `yolo-status ${pageType}`;
+                
+                if (splitPosition) {
+                    this.splitPositionInfo.textContent = `Bölme: ${splitPosition}px`;
+                } else {
+                    this.splitPositionInfo.textContent = '';
+                }
+            }
+
+            getPageTypeText(pageType) {
+                const types = {
+                    'single': 'Tek Sayfa',
+                    'double': 'Çift Sayfa',
+                    'rotated_double': 'Döndürülmüş Çift Sayfa'
+                };
+                return types[pageType] || 'Bilinmeyen';
+            }
+
+            showStatusPanel() {
+                this.statusPanel.style.display = 'block';
+            }
+
+            updateCurrentPageStatus() {
+                this.currentPageStatus.textContent = `${this.currentPage + 1} / ${this.totalPages}`;
+            }
+
+            async displayImage(imageDataUrl) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.currentImage = img;
+                        this.fitToCanvas();
+                        this.redrawCanvas();
+                        this.updateRealTimePreview();
+                        resolve();
+                    };
+                    img.src = imageDataUrl;
+                });
+            }
+
+            redrawCanvas() {
+                if (!this.currentImage) return;
+
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Calculate display size
+                const displayWidth = this.currentImage.width * this.zoomFactor;
+                const displayHeight = this.currentImage.height * this.zoomFactor;
+                
+                // Draw image
+                this.ctx.drawImage(
+                    this.currentImage,
+                    this.panX,
+                    this.panY,
+                    displayWidth,
+                    displayHeight
+                );
+                
+                // Update overlay
+                this.updateOverlay();
+            }
+
+            updateOverlay() {
+                // Clear existing overlays
+                this.overlaySvg.innerHTML = '';
+                
+                if (!this.currentImage) return;
+                
+                // Update SVG size
+                this.overlaySvg.setAttribute('width', this.canvas.width);
+                this.overlaySvg.setAttribute('height', this.canvas.height);
+                
+                // Draw split line if enabled
+                if (this.splitMode && this.splitPosition) {
+                    this.updateSplitLine();
+                }
+            }
+
+            updateSplitLine() {
+                if (!this.currentImage || !this.splitPosition) return;
+                
+                const scaledX = (this.splitPosition * this.zoomFactor) + this.panX;
+                
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', scaledX);
+                line.setAttribute('y1', 0);
+                line.setAttribute('x2', scaledX);
+                line.setAttribute('y2', this.canvas.height);
+                line.setAttribute('class', 'split-line');
+                
+                this.overlaySvg.appendChild(line);
+            }
+
+            updateRealTimePreview() {
+                if (!this.currentImage || !this.previewMode) return;
+                // Draw original
+                this.drawPreviewImage(this.currentImage, this.originalPreviewCtx, this.originalPreview);
+                
+                // Apply processing and draw processed version
+                this.applyPreviewProcessing();
+
+                // Geçici canvas oluştur
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = this.currentImage.width;
+                tempCanvas.height = this.currentImage.height;
+
+                // Görseli çiz
+                tempCtx.drawImage(this.currentImage, 0, 0);
+
+                // Filtreleri uygula
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const processedData = this.applyImageFilters(imageData);
+                tempCtx.putImageData(processedData, 0, 0);
+
+                // Ana canvas’ta (main-canvas) göster
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                const scale = Math.min(
+                    this.canvas.width / tempCanvas.width,
+                    this.canvas.height / tempCanvas.height
+                );
+                const w = tempCanvas.width * scale;
+                const h = tempCanvas.height * scale;
+                const x = (this.canvas.width - w) / 2;
+                const y = (this.canvas.height - h) / 2;
+
+                this.ctx.drawImage(tempCanvas, x, y, w, h);
+            }
+
+
+            drawPreviewImage(image, ctx, canvas) {
+                const scale = Math.min(canvas.width / image.width, canvas.height / image.height);
+                const width = image.width * scale;
+                const height = image.height * scale;
+                const x = (canvas.width - width) / 2;
+                const y = (canvas.height - height) / 2;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(image, x, y, width, height);
+            }
+
+            applyPreviewProcessing() {
+                if (!this.currentImage) return;
+                
+                // Create a temporary canvas for processing
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = this.currentImage.width;
+                tempCanvas.height = this.currentImage.height;
+                
+                // Draw original image
+                tempCtx.drawImage(this.currentImage, 0, 0);
+                
+                // Apply filters based on current settings
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const processedData = this.applyImageFilters(imageData);
+                tempCtx.putImageData(processedData, 0, 0);
+                
+                // Draw to preview
+                this.drawPreviewImage(tempCanvas, this.processedPreviewCtx, this.processedPreview);
+            }
+
+            applyImageFilters(imageData) {
+                // Simple client-side processing for preview
+                const data = imageData.data;
+                const contrast = parseFloat(document.getElementById('contrast').value);
+                const brightness = parseFloat(document.getElementById('brightness').value);
+                
+                // YENİ EKLENDİ: Siyah-beyaz kutusunun durumunu al
+                const grayscale = document.getElementById('grayscale-enable').checked;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+
+                    // 1. Kontrast ve Parlaklığı uygula
+                    r = Math.min(255, Math.max(0, (r - 128) * contrast + 128 + (brightness - 1) * 50));
+                    g = Math.min(255, Math.max(0, (g - 128) * contrast + 128 + (brightness - 1) * 50));
+                    b = Math.min(255, Math.max(0, (b - 128) * contrast + 128 + (brightness - 1) * 50));
+
+                    // 2. YENİ EKLENDİ: Grayscale (Siyah-Beyaz) uygula
+                    if (grayscale) {
+                        // Daha doğru bir luma (parlaklık) hesaplaması
+                        const avg = (r * 0.299) + (g * 0.587) + (b * 0.114);
+                        r = avg;
+                        g = avg;
+                        b = avg;
+                    }
+                    
+                    data[i] = r;
+                    data[i + 1] = g;
+                    data[i + 2] = b;
+                }
+                
+                return imageData;
+            }
+
+            fitToCanvas() {
+                if (!this.currentImage) return;
+                
+                const canvasAspect = this.canvas.width / this.canvas.height;
+                const imageAspect = this.currentImage.width / this.currentImage.height;
+                
+                if (imageAspect > canvasAspect) {
+                    // Fit to width
+                    this.zoomFactor = this.canvas.width / this.currentImage.width;
+                } else {
+                    // Fit to height
+                    this.zoomFactor = this.canvas.height / this.currentImage.height;
+                }
+                
+                // Center image
+                this.panX = (this.canvas.width - (this.currentImage.width * this.zoomFactor)) / 2;
+                this.panY = (this.canvas.height - (this.currentImage.height * this.zoomFactor)) / 2;
+                
+                this.updateZoomDisplay();
+                this.redrawCanvas();
+            }
+
+            zoom(factor) {
+                this.zoomFactor *= factor;
+                this.zoomFactor = Math.max(0.1, Math.min(8.0, this.zoomFactor));
+                this.updateZoomDisplay();
+                this.redrawCanvas();
+            }
+
+            updateZoomDisplay() {
+                this.zoomLevel.textContent = Math.round(this.zoomFactor * 100) + '%';
+            }
+
+            changePage(delta) {
+                const newPage = this.currentPage + delta;
+                if (newPage >= 0 && newPage < this.totalPages) {
+                    this.currentPage = newPage;
+                    this.updatePageInfo();
+                    this.loadPagePreview();
+                }
+            }
+
+            jumpToPage() {
+                let targetPage = parseInt(this.pageCurrentInput.value, 10);
+                
+                // Girdiyi doğrula
+                if (isNaN(targetPage) || targetPage < 1) {
+                    targetPage = 1;
+                } else if (targetPage > this.totalPages) {
+                    targetPage = this.totalPages;
+                }
+
+                // API'miz 0 tabanlı olduğu için 1 çıkar
+                this.currentPage = targetPage - 1;
+                
+                this.updatePageInfo(); // Girdiyi temizle/doğrula (örn: 150 -> 10)
+                this.loadPagePreview();
+            }
+
+            updatePageInfo() {
+                this.pageCurrentInput.value = this.currentPage + 1;
+                this.pageTotalSpan.textContent = this.totalPages;
+
+                this.prevPageBtn.disabled = this.currentPage === 0;
+                this.nextPageBtn.disabled = this.currentPage === (this.totalPages - 1);
+            }
+
+            updateDocumentInfo(info) {
+                this.documentInfo.innerHTML = `
+                    <div><strong>Dosya:</strong> ${info.filename}</div>
+                    <div><strong>Sayfalar:</strong> ${info.page_count}</div>
+                    <div><strong>İş ID:</strong> ${info.job_id.substring(0, 8)}...</div>
+                `;
+            }
+
+            enableControls() {
+                this.processBtn.disabled = false;
+                this.prevPageBtn.disabled = false;
+                this.nextPageBtn.disabled = false;
+            }
+
+            togglePreviewMode() {
+                this.previewMode = !this.previewMode;
+                this.previewToggle.classList.toggle('btn-primary', this.previewMode);
+                this.previewToggle.classList.toggle('btn-secondary', !this.previewMode);
+                
+                this.previewPanel.style.display = this.previewMode ? 'block' : 'none';
+                
+                if (this.previewMode) {
+                    this.updateRealTimePreview();
+                }
+            }
+
+            handleMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                this.lastMouseX = e.clientX - rect.left;
+                this.lastMouseY = e.clientY - rect.top;
+                this.isDragging = true;
+            }
+
+            handleMouseMove(e) {
+                if (!this.isDragging) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+                
+                const deltaX = currentX - this.lastMouseX;
+                const deltaY = currentY - this.lastMouseY;
+                
+                this.panX += deltaX;
+                this.panY += deltaY;
+                
+                this.lastMouseX = currentX;
+                this.lastMouseY = currentY;
+                
+                this.redrawCanvas();
+            }
+
+            handleMouseUp(e) {
+                this.isDragging = false;
+            }
+
+            handleWheel(e) {
+                e.preventDefault();
+
+                if (e.ctrlKey) {
+                    // --- CTRL + TEKERLEK = ZOOM ---
+                    const rect = this.canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    
+                    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+                    const oldZoom = this.zoomFactor;
+                    
+                    this.zoom(zoomFactor);
+                    
+                    // Fare konumuna doğru zoom yap
+                    const zoomRatio = this.zoomFactor / oldZoom;
+                    this.panX = mouseX - (mouseX - this.panX) * zoomRatio;
+                    this.panY = mouseY - (mouseY - this.panY) * zoomRatio;
+                    
+                    this.redrawCanvas();
+
+                } else {
+                    // --- SADECE TEKERLEK = SAYFA DEĞİŞTİR ---
+                    // Hızlı kaydırmada çoklu sayfa atlamayı önlemek için basit bir gecikme (debounce)
+                    if (this.isWheelPaging) return; 
+                    
+                    this.isWheelPaging = true;
+                    setTimeout(() => { this.isWheelPaging = false; }, 100); // 100ms bekle
+
+                    if (e.deltaY > 0) {
+                        // Aşağı kaydırma (Sonraki Sayfa)
+                        this.changePage(1);
+                    } else if (e.deltaY < 0) {
+                        // Yukarı kaydırma (Önceki Sayfa)
+                        this.changePage(-1);
+                    }
+                }
+            }
+
+            handleDoubleClick(e) {
+                this.fitToCanvas();
+            }
+
+            getProcessingSettings() {
+                return {
+                    // Image enhancement
+                    contrast: parseFloat(document.getElementById('contrast').value),
+                    brightness: parseFloat(document.getElementById('brightness').value),
+                    sharpness: parseFloat(document.getElementById('sharpness').value),
+                    saturation: parseFloat(document.getElementById('saturation').value),
+                    
+                    // Filters
+                    grayscale_enable: document.getElementById('grayscale-enable').checked, 
+                    // threshold_enable: KALDIRILDI
+                    // threshold_type: KALDIRILDI
+                    // threshold_value: KALDIRILDI
+                    // edge_enhance_enable: KALDIRILDI
+                    
+                    // Advanced
+                    py_reform_enable: document.getElementById('py-reform-enable').checked,
+                    doclayout_enable: document.getElementById('doclayout-enable').checked,
+                    doclayout_device: document.getElementById('device-select').value,
+                    // rotation_angle: KALDIRILDI
+                    
+                    // Output
+                    output_format: document.getElementById('output-format').value,
+                    output_dpi: parseInt(document.getElementById('output-dpi').value),
+                    // enable_split: KALDIRILDI
+                    page_order: document.getElementById('page-order').value
+                };
+            }
+
+
+            async processDocument() {
+                // --- MODIFICATION: Use initialFilePath ---
+                if (!this.initialFilePath) {
+                    this.showNotification("İşlenecek dosya yolu bulunamadı.", "error");
+                    return;
+                }
+
+                try {
+                    const settings = this.getProcessingSettings();
+
+                    this.processingStartTime = Date.now();
+                    this.showProcessing(true, 'Ön İşleme başlatılıyor...');
+                    this.updateProcessingStep('step-processing', 'active');
+                    this.processingStatus.textContent = 'İşleniyor';
+
+                    const response = await fetch(`${this.apiBase}/process`, { // Use correct endpoint
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            file_path: this.initialFilePath, // Send the path
+                            settings: settings
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.job_id) {
+                        this.currentJobId = result.job_id; // Store the NEW job ID for this process run
+                        // --- END MODIFICATION ---
+                        this.pollJobStatus(); // Start polling using the new job ID
+                        this.showNotification('Ön İşleme başlatıldı', 'success');
+                    } else {
+                        throw new Error(result.error || result.detail || 'Ön İşleme başlatılamadı');
+                    }
+                } catch (error) {
+                    console.error('Processing error:', error);
+                    this.showNotification('Ön İşleme başarısız: ' + error.message, 'error');
+                    this.showProcessing(false);
+                    this.processingStatus.textContent = 'Başarısız';
+                    this.updateProcessingStep('step-processing', 'pending'); // Reset step status
+                }
+            }
+
+            async pollJobStatus() {
+                if (this.pollingInterval) {
+                    clearInterval(this.pollingInterval); // Clear previous interval if any
+                }
+
+                this.pollingInterval = setInterval(async () => { // Store interval ID
+                    if (!this.currentJobId) { // Check if we have a preprocessing job ID
+                        clearInterval(this.pollingInterval);
+                        console.warn("Polling stopped: No active preprocessing job ID.");
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`${this.apiBase}/job/${this.currentJobId}/status`); // Use this.apiBase
+                        const status = await response.json();
+
+                        if (!this.currentJobId) { // Check again in case it was cleared during fetch
+                            clearInterval(this.pollingInterval);
+                            return;
+                        }
+
+                        this.updateProgressFromStatus(status);
+
+                        // --- DEĞİŞİKLİK BAŞLANGICI: Otomatik yönlendirme yerine sonuçları göster ---
+                        if (status.status === 'completed' && status.redirect_to_ocr === true) {
+                            clearInterval(this.pollingInterval);
+                            this.pollingInterval = null; // Clear interval ID
+
+                            this.showProcessing(false);
+                            this.processingStatus.textContent = 'Ön İşleme Tamamlandı';
+                            this.updateProcessingStep('step-complete', 'completed');
+                            this.showNotification('Ön İşleme tamamlandı! İşlenmiş belge yüklendi.', 'success'); // Mesaj güncellendi
+                            
+                            this.downloadBtn.disabled = false; // İndir butonunu etkinleştir
+                            this.continueToOcrBtn.style.display = 'inline-flex'; // YENİ OCR butonunu göster
+
+                            // --- YENİ EKLENEN BLOK BAŞLANGICI ---
+                            // İşlenmiş belge moduna geç ve arayüzü güncelle
+                            this.isProcessedState = true; 
+                            // Backend'den gelen GÜNCELLENMİŞ (işlenmiş) sayfa sayısını al
+                            this.totalPages = status.page_count; 
+                            this.currentPage = 0; // İşlenmiş belgenin ilk sayfasına git (index 0)
+                            
+                            this.updatePageInfo(); // Sayfa navigasyonunu (örn: 1 / 10) güncelle
+                            
+                            // Sağ paneli ayarlar yerine işlem sonuçlarıyla doldur
+                            this.showProcessingResults(status.result); 
+                            
+                            // Ana canvas'a işlenmiş belgenin ilk sayfasını yükle
+                            this.loadPagePreview(); 
+                            // --- YENİ EKLENEN BLOK SONU ---
+
+                            // Stop further processing in this interval
+                            return;
+                        }
+                        // --- DEĞİŞİKLİK BİTİŞİ ---
+
+                        else if (status.status === 'completed') {
+                            // (redirect_to_ocr=false) Bu blok zaten istediğimiz gibi çalışıyordu.
+                            clearInterval(this.pollingInterval);
+                            this.pollingInterval = null;
+                            this.showProcessing(false);
+                            this.downloadBtn.disabled = false;
+                            this.processingStatus.textContent = 'Tamamlandı (Yönlendirme Yok)';
+                            this.updateProcessingStep('step-complete', 'completed');
+                            this.showNotification('Ön İşleme tamamlandı!', 'success');
+                            
+                            // Bu fonksiyonlar zaten burada mevcuttu ve doğru çalışıyor
+                            this.showProcessingResults(status.result);
+                            this.isProcessedState = true;
+                            this.totalPages = status.page_count; // Backend'den gelen işlenmiş sayfa sayısı
+                            this.currentPage = 0;
+                            this.updatePageInfo();
+                            this.loadPagePreview(); // Load the final processed preview
+
+                        } else if (status.status === 'failed') {
+                            clearInterval(this.pollingInterval);
+                            this.pollingInterval = null;
+                            this.showProcessing(false);
+                            this.processingStatus.textContent = 'Başarısız';
+                            this.showNotification('Ön İşleme başarısız: ' + (status.result?.error || 'Bilinmeyen hata'), 'error');
+                            this.updateProcessingStep('step-processing', 'pending'); // Reset step
+                            this.updateProcessingStep('step-complete', 'pending');
+                        }
+                    } catch (error) {
+                        console.error('Status polling error:', error);
+                        // Optional: Stop polling on error or try a few times?
+                        // clearInterval(this.pollingInterval);
+                        // this.pollingInterval = null;
+                        // this.showNotification("Durum kontrolü başarısız.", "error");
+                    }
+                }, 2000); // Poll every 2 seconds
+            }
+
+            async loadProcessedImage() {
+                if (!this.currentJobId) return;
+
+                try {
+                    const response = await fetch(
+                        `${this.apiBase}/job/${this.currentJobId}/processed_preview`
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error('İşlenmiş önizleme görüntüsü alınamadı.');
+                    }
+                    
+                    const imageBlob = await response.blob();
+                    const imageUrl = URL.createObjectURL(imageBlob);
+                    
+                    const img = new Image();
+                    img.onload = () => {
+                        this.currentImage = img;
+                        this.fitToCanvas();
+                        this.redrawCanvas();
+                        URL.revokeObjectURL(imageUrl); // Belleği serbest bırak
+                    };
+                    img.src = imageUrl;
+
+                } catch (error) {
+                    console.error('Processed preview loading error:', error);
+                    this.showNotification('İşlenmiş önizleme yüklenemedi', 'error');
+                }
+            }
+
+            showProcessingResults(result) {
+                const titleEl = document.getElementById('properties-panel-title');
+                const resultsEl = document.getElementById('results-panel');
+                const tabsEl = document.querySelector('.tab-buttons');
+                const scrollEl = document.querySelector('.tab-scroll');
+
+                if (!titleEl || !resultsEl || !tabsEl || !scrollEl) return;
+
+                // 1. Başlığı değiştir ve ayarları gizle
+                titleEl.textContent = 'İşlem Sonuçları';
+                tabsEl.style.display = 'none';
+                scrollEl.style.display = 'none';
+                resultsEl.style.display = 'block';
+
+                // 2. Sonuçları formatla
+                const settings = result.settings_used || {};
+                const engines = [
+                    settings.py_reform_enable ? 'py-reform (Düzeltme)' : null,
+                    settings.doclayout_enable ? 'YOLO (Düzen Tespiti)' : null,
+                    settings.denoise_enable ? 'Gürültü Azaltma' : null,
+                    settings.threshold_enable ? `Eşikleme (${settings.threshold_type})` : null,
+                    settings.edge_enhance_enable ? 'Kenar İyileştirme' : null
+                ].filter(Boolean); // null olanları kaldır
+
+                // 3. HTML oluştur ve ekle
+                resultsEl.innerHTML = `
+                    <div class="status-panel" style="display: block; margin-bottom: 1rem;">
+                        <div class="status-item">
+                            <span class="status-label">Toplam Süre</span>
+                            <span class="status-value">${parseFloat(result.processing_time || 0).toFixed(2)} saniye</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Toplam Sayfa (Çıktı)</span>
+                            <span class="status-value">${result.total_processed_pages || 0}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Çıktı Formatı</span>
+                            <span class="status-value">${(settings.output_format || 'PDF').toUpperCase()}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Çözünürlük (DPI)</span>
+                            <span class="status-value">${settings.output_dpi || 300} DPI</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Aktif İşlem Motorları</label>
+                        <ul style="list-style-type: disc; padding-left: 20px; font-size: 0.875rem; color: var(--text-secondary);">
+                            ${engines.length > 0 ? engines.map(e => `<li>${e}</li>`).join('') : '<li>Standart İyileştirme</li>'}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            resetPropertiesPanel() {
+                const titleEl = document.getElementById('properties-panel-title');
+                const resultsEl = document.getElementById('results-panel');
+                const tabsEl = document.querySelector('.tab-buttons');
+                const scrollEl = document.querySelector('.tab-scroll');
+
+                if (!titleEl || !resultsEl || !tabsEl || !scrollEl) return;
+
+                // 1. Başlığı geri al ve ayarları göster
+                titleEl.textContent = 'İşleme Ayarları';
+                tabsEl.style.display = 'flex';
+                scrollEl.style.display = 'block';
+                resultsEl.style.display = 'none';
+
+                // 2. Sonuç içeriğini temizle
+                resultsEl.innerHTML = '';
+
+                // 3. YOLO panelini geri göster
+                this.yoloDetection.style.display = 'block';
+                
+                // 4. Tüm ayar kontrollerini (slider, buton) sıfırla
+                this.resetSettingsToDefaults();
+            }
+
+            // YENİ EKLENEN FONKSİYON
+            resetSettingsToDefaults() {
+                // Varsayılan ayarları (HTML'deki yüklendiği anki) tanımla
+                const defaults = {
+                    contrast: 1.0,
+                    brightness: 1.3,
+                    sharpness: 1.0,
+                    saturation: 1.0,
+                    // rotation_angle: 0.0, // KALDIRILDI
+                    
+                    grayscale_enable: false,
+                    // threshold_enable: false, // KALDIRILDI
+                    // threshold_type: 'binary', // KALDIRILDI
+                    // threshold_value: 127, // KALDIRILDI
+                    // edge_enhance_enable: false, // KALDIRILDI
+                    
+                    py_reform_enable: true,
+                    doclayout_enable: true,
+                    
+                    // Buton stilleri
+                    auto_enhance_btn_class: 'btn-secondary',
+                    to_gray_btn_class: 'btn-secondary'
+                };
+
+                try {
+                    // Ayarları uygula
+                    document.getElementById("contrast").value = defaults.contrast;
+                    document.getElementById("brightness").value = defaults.brightness;
+                    document.getElementById("sharpness").value = defaults.sharpness;
+                    document.getElementById("saturation").value = defaults.saturation;
+
+                    document.getElementById("grayscale-enable").checked = defaults.grayscale_enable;
+
+                    document.getElementById("py-reform-enable").checked = defaults.py_reform_enable;
+                    document.getElementById("doclayout-enable").checked = defaults.doclayout_enable;
+
+                    // Değer göstergelerini (slider'lar için) güncelle
+                    document.getElementById("contrast-value").textContent = defaults.contrast.toFixed(1);
+                    document.getElementById("brightness-value").textContent = defaults.brightness.toFixed(1);
+                    document.getElementById("sharpness-value").textContent = defaults.sharpness.toFixed(1);
+                    document.getElementById("saturation-value").textContent = defaults.saturation.toFixed(1);
+
+                    // Toggle butonlarının stillerini sıfırla
+                    const autoBtn = document.getElementById("auto-enhance-btn");
+                    const grayBtn = document.getElementById("to-gray-btn");
+
+                    if (autoBtn) {
+                        autoBtn.classList.remove("btn-primary");
+                        autoBtn.classList.add("btn-secondary");
+                    }
+                    if (grayBtn) {
+                        grayBtn.classList.remove("btn-primary");
+                        grayBtn.classList.add("btn-secondary");
+                    }
+
+                    // Eşikleme slider'ının görünürlüğünü ayarla
+                    const thresholdValueGroup = document.getElementById('threshold-value-group');
+                    if (thresholdValueGroup) {
+                         // thresholdValueGroup.style.display = (defaults.threshold_type === 'binary') ? 'block' : 'none'; // KALDIRILDI
+                         thresholdValueGroup.style.display = 'none'; // Artık hep gizli
+                    }
+
+                } catch (error) {
+                    console.error("Ayarlar sıfırlanırken hata oluştu:", error);
+                }
+            }
+
+            updateProgressFromStatus(status) {
+                // Calculate progress based on page count
+                const progress = status.progress || 0;
+                this.updateProgress(progress);
+                
+                // Update detailed status information
+                this.currentPageStatus.textContent = `${status.current_page || 0} / ${status.page_count}`;
+                
+                // Update timing information
+                if (status.timing) {
+                    this.estimatedTime.textContent = status.timing.estimated_remaining_text;
+                    this.timeEstimate.textContent = `Tahmini kalan süre: ${status.timing.estimated_remaining_text}`;
+                    
+                    // Update processing status with speed info
+                    if (status.timing.pages_per_minute > 0) {
+                        this.processingStatus.textContent = `İşleniyor (${status.timing.pages_per_minute} sayfa/dk)`;
+                    }
+                    
+                    // Show page time in processing message
+                    if (status.timing.last_page_time > 0) {
+                        this.processingMessage.textContent = 
+                            `Sayfa ${status.current_page || 0}/${status.page_count} işleniyor... (Ort. Sayfa başı işlem süresi: ${status.timing.last_page_time}s)`;
+                    }
+                }
+                
+                // Update progress steps based on current progress
+                if (progress > 0 && progress < 100) {
+                    this.updateProcessingStep('step-upload', 'completed');
+                    this.updateProcessingStep('step-analysis', 'completed');
+                    this.updateProcessingStep('step-processing', 'active');
+                    this.updateProcessingStep('step-complete', 'pending');
+                } else if (progress >= 100) {
+                    this.updateProcessingStep('step-upload', 'completed');
+                    this.updateProcessingStep('step-analysis', 'completed');
+                    this.updateProcessingStep('step-processing', 'completed');
+                    this.updateProcessingStep('step-complete', 'active');
+                }
+                
+                // Show detailed progress in steps
+                const processingStep = document.getElementById('step-processing');
+                if (processingStep && status.current_page && status.page_count) {
+                    const stepText = processingStep.querySelector('div:last-child');
+                    if (stepText) {
+                        stepText.textContent = `Sayfalar işleniyor (${status.current_page}/${status.page_count})`;
+                    }
+                }
+            }
+
+            formatTime(seconds) {
+                if (seconds < 60) {
+                    return `${Math.round(seconds)} saniye`;
+                } else if (seconds < 3600) {
+                    return `${Math.round(seconds / 60)} dakika`;
+                } else {
+                    return `${Math.round(seconds / 3600)} saat`;
+                }
+            }
+
+            formatElapsedTime(totalSeconds) {
+                // Saniyeyi saat, dakika ve saniyeye bölüştür
+                const hours = Math.floor(totalSeconds / 3600);
+                totalSeconds %= 3600;
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = Math.floor(totalSeconds % 60); // Math.floor eklendi
+
+                // 01, 05 gibi görünmesi için 'pad' fonksiyonu
+                const pad = (num) => num.toString().padStart(2, '0');
+
+                // HH:MM:SS formatında döndür
+                return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+            }
+
+            updateProcessingStep(stepId, status) {
+                const step = document.getElementById(stepId);
+                if (step) {
+                    step.className = `progress-step ${status}`;
+                }
+            }
+
+            async downloadResults() {
+                if (!this.currentJobId) return;
+
+                try {
+                    const response = await fetch(`${this.apiBase}/job/${this.currentJobId}/download`);
+                    
+                    if (response.ok) {
+                        
+                        // 1. "Content-Disposition" header'ını (başlığını) oku
+                        const disposition = response.headers.get('content-disposition');
+                        let downloadFilename = `islenmis_sonuc_${this.currentJobId}.pdf`; // Varsayılan ad
+
+                        if (disposition && disposition.indexOf('attachment') !== -1) {
+                            // 2. Header'ın içinden dosya adını (filename="dosya.pdf") ayıkla
+                            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            const matches = filenameRegex.exec(disposition);
+                            
+                            if (matches != null && matches[1]) {
+                                // 3. Tırnak işaretlerini temizle ve Türkçe karakterler için decode et
+                                downloadFilename = decodeURIComponent(matches[1].replace(/['"]/g, ''));
+                            }
+                        }
+
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        
+                        // 4. Hard-coded ZIP adı yerine, sunucudan gelen adı kullan
+                        a.download = downloadFilename; // <-- BURASI DEĞİŞTİ
+                        
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        
+                        this.showNotification('İndirme başlatıldı', 'success');
+                    } else {
+                        throw new Error('İndirme başarısız');
+                    }
+                } catch (error) {
+                    console.error('Download error:', error);
+                    this.showNotification('İndirme başarısız: ' + error.message, 'error');
+                }
+            }
+
+            // --- YENİ FONKSİYON BAŞLANGICI ---
+            redirectToOcr() {
+                if (!this.currentJobId) {
+                    this.showNotification("Geçerli bir iş ID'si bulunamadı.", "error");
+                    return;
+                }
+                this.showNotification("OCR sayfasına yönlendiriliyorsunuz...", "success");
+                
+                // Bildirimin görünmesi için küçük bir gecikme
+                setTimeout(() => {
+                    window.location.href = `/ocr?preprocessed_job_id=${this.currentJobId}`; 
+                }, 500);
+            }
+
+            showProcessing(show, message = 'İşleniyor...') {
+                this.processingOverlay.style.display = show ? 'flex' : 'none';
+                if (show && message) {
+                    this.processingMessage.textContent = message;
+                }
+
+                // --- Geçen Süre Sayacını Başlat/Durdur ---
+                if (show) {
+                    // Eğer zaten bir sayaç çalışıyorsa, önce temizle (önlem olarak)
+                    if (this.elapsedTimeInterval) {
+                        clearInterval(this.elapsedTimeInterval);
+                    }
+
+                    // Elementi tekrar seç (initializeElements'ta zaten seçildi ama bu bir güvenlik kontrolü)
+                    if (!this.elapsedTimeCounter) { 
+                        this.elapsedTimeCounter = document.getElementById('elapsed-time-counter');
+                    }
+                    
+                    // this.processingStartTime'in processDocument() içinde ayarlandığından eminiz.
+                    // Sayaç bu başlangıç zamanını kullanarak çalışacak.
+                    
+                    this.elapsedTimeInterval = setInterval(() => {
+                        // Sadece işlem başladığında (processingStartTime ayarlandıysa) ve element varsa güncelle
+                        if (this.processingStartTime && this.elapsedTimeCounter) {
+                            const now = Date.now();
+                            const elapsedMilliseconds = now - this.processingStartTime;
+                            const elapsedSeconds = Math.floor(elapsedMilliseconds / 1000);
+                            
+                            // Yeni formatlama fonksiyonumuzu kullan
+                            this.elapsedTimeCounter.textContent = `Geçen Süre: ${this.formatElapsedTime(elapsedSeconds)}`;
+                        }
+                    }, 1000); // Her saniye güncelle
+
+                } else {
+                    // İşlem bittiğinde (veya hata verdiğinde) sayacı durdur
+                    if (this.elapsedTimeInterval) {
+                        clearInterval(this.elapsedTimeInterval);
+                        this.elapsedTimeInterval = null;
+                    }
+                    // Sayacın metnini bir sonraki işlem için sıfırla
+                    if (this.elapsedTimeCounter) {
+                        this.elapsedTimeCounter.textContent = 'Geçen Süre: 00:00:00';
+                    }
+                    // Başlangıç zamanını sıfırla (pollJobStatus'ta hata veya tamamlanma durumunda)
+                    this.processingStartTime = null; 
+                }
+            }
+
+            updateProgress(percent) {
+                this.progressBar.style.width = percent + '%';
+                this.progressText.textContent = Math.round(percent) + '%';
+            }
+
+            showNotification(message, type = 'success') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                // Trigger animation
+                setTimeout(() => notification.classList.add('show'), 100);
+                
+                // Remove after 5 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        if (document.body.contains(notification)) {
+                            document.body.removeChild(notification);
+                        }
+                    }, 300);
+                }, 5000);
+            }
+            // 3. TEMA DEĞİŞTİRME FONKSİYONU
+            setupThemeToggle() {
+                const themeToggle = document.getElementById('theme-toggle');
+                if (!themeToggle) return;
+
+                themeToggle.addEventListener('click', () => {
+                    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+
+                    // İkonu güncelle
+                    themeToggle.innerHTML = newTheme === 'light' 
+                        ? '<i data-lucide="sun"></i>' 
+                        : '<i data-lucide="moon"></i>';
+                    
+                    // Lucide'in yeni ikonu işlemesini sağla
+                    lucide.createIcons();
+                });
+            }
+
+            // 4. KLAVYE KISAYOLLARI FONKSİYONU
+            setupKeyboardShortcuts() {
+                window.addEventListener('keydown', (e) => {
+                    // Form elemanlarındayken kısayolları tetikleme
+                    const activeEl = document.activeElement;
+                    if (activeEl && ['INPUT', 'SELECT', 'TEXTAREA'].includes(activeEl.tagName)) {
+                        return;
+                    }
+
+                    // Ctrl (veya Mac'te Cmd) tuşunun basılı olup olmadığını kontrol et
+                    const isCtrlPressed = e.ctrlKey || e.metaKey;
+
+                    if (isCtrlPressed && e.key === 'o') { // Ctrl + O
+                        e.preventDefault();
+                        this.fileInput.click();
+                    } else if (isCtrlPressed && e.key === 'Enter') { // Ctrl + Enter
+                        e.preventDefault();
+                        if (!this.processBtn.disabled) {
+                            this.processBtn.click();
+                        }
+                    } else if (e.key === 'ArrowLeft') { // Sol Ok
+                        e.preventDefault();
+                        if (!this.prevPageBtn.disabled) {
+                            this.changePage(-1);
+                        }
+                    } else if (e.key === 'ArrowRight') { // Sağ Ok
+                        e.preventDefault();
+                        if (!this.nextPageBtn.disabled) {
+                            this.changePage(1);
+                        }
+                    } else if (e.key === '=' || e.key === '+') { // + veya = (Zoom In)
+                        e.preventDefault();
+                        this.zoom(1.2);
+                    } else if (e.key === '-') { // - (Zoom Out)
+                        e.preventDefault();
+                        this.zoom(1/1.2);
+                    }
+                });
+            }
+        }
+
+// Sayfa yüklenirken temayı uygula (flash'ı önlemek için)
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Eğer tema butonu varsa ikonu ayarla (DOM hazır olmadan önce)
+            // Bu kısım DOMContentLoaded'de tekrar çalışacak ama ilk yükleme için önemli
+            if (savedTheme === 'dark') {
+                const themeToggle = document.getElementById('theme-toggle');
+                if(themeToggle) themeToggle.innerHTML = '<i data-lucide="moon"></i>';
+            }
+        })();
+
+        // Initialize application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // DEĞİŞİKLİK: Uygulama nesnesini global 'window'a ata
+            window.appInstance = new GelismissPDFOCR();
+            
+            // Initialize and manage the WebGL background
+            const neuralNetwork = new NeuralNetworkVisualization();
+            neuralNetwork.initialize();
+            window.neuralNetwork = neuralNetwork; // Make it accessible for resizing
+            
+            // Sayfa yüklendiğinde temayı ve ikonları son kez ayarla
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                themeToggle.innerHTML = savedTheme === 'light' 
+                    ? '<i data-lucide="sun"></i>' 
+                    : '<i data-lucide="moon"></i>';
+            }
+
+            // 1. TÜM İKONLARI BAŞLAT
+            lucide.createIcons();
+        });
+
+        // Resize handler for responsive WebGL
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('neural-canvas');
+            if (canvas && window.neuralNetwork && window.neuralNetwork.renderer) {
+                window.neuralNetwork.renderer.setSize(window.innerWidth, window.innerHeight);
+                window.neuralNetwork.camera.aspect = window.innerWidth / window.innerHeight;
+                window.neuralNetwork.camera.updateProjectionMatrix();
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (window.lucide) {
+                lucide.createIcons();
+            } else {
+                console.error("Lucide yüklenemedi!");
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        // Sekme geçişleri
+        const tabs = document.querySelectorAll(".tab-button");
+        const contents = document.querySelectorAll(".tab-content");
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+            tabs.forEach(t => t.classList.remove("active"));
+            contents.forEach(c => c.classList.remove("active"));
+            tab.classList.add("active");
+            document.getElementById(tab.dataset.target).classList.add("active");
+            if (window.lucide) lucide.createIcons();
+            });
+        });
+
+        // Slider value display (id'ler sende zaten var)
+        const bindRange = (id, out, suffix='') => {
+            const el = document.getElementById(id);
+            const outEl = document.getElementById(out);
+            if (!el || !outEl) return;
+            const render = () => outEl.textContent = `${parseFloat(el.value).toFixed( (id==='brightness')?1:1 )}${suffix}`;
+            el.addEventListener('input', render);
+            render();
+        };
+        bindRange('contrast','contrast-value');
+        bindRange('brightness','brightness-value');
+        bindRange('sharpness','sharpness-value');
+        bindRange('saturation','saturation-value');
+        });
+    </script>
+
+</body>
+</html>

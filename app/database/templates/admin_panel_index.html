@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSPA OCR Database Admin Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="brand" id="brandLogo" title="Dashboard'a Git">
+                <img src="/static/gemini_ospa_ocr_db_logo.png" alt="OSPA OCR Logo">
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-page="dashboard">
+                <span class="material-symbols-rounded">dashboard</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-page="records">
+                <span class="material-symbols-rounded">library_books</span>
+                <span class="nav-text">Kayıtlar</span>
+            </a>
+            <a href="#" class="nav-item" data-page="authors">
+                <span class="material-symbols-rounded">group</span>
+                <span class="nav-text">Yazarlar</span>
+            </a>
+            <a href="#" class="nav-item" data-page="search">
+                <span class="material-symbols-rounded">search</span>
+                <span class="nav-text">Arama</span>
+            </a>
+            <a href="#" class="nav-item" data-page="export">
+                <span class="material-symbols-rounded">import_export</span>
+                <span class="nav-text">Export/Import</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="db-status" id="dbStatus">
+                <span class="status-dot"></span>
+                <span class="status-text">Bağlanıyor...</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="page-title" id="pageTitle">Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn btn-icon" id="refreshBtn" title="Yenile">
+                    <span class="material-symbols-rounded">refresh</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Pages Container -->
+        <div class="pages-container">
+
+            <!-- Dashboard Page -->
+            <section class="page active" id="page-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">&#128218;</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statDocuments">-</span>
+                            <span class="stat-label">Toplam Eser</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">&#128100;</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statAuthors">-</span>
+                            <span class="stat-label">Yazar</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">&#128196;</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statPages">-</span>
+                            <span class="stat-label">Toplam Sayfa</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Son Eklenenler</h3>
+                        </div>
+                        <div class="card-body">
+                            <ul class="recent-list" id="recentList">
+                                <li class="loading">Yükleniyor...</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>En Çok Eser Sahibi Yazarlar</h3>
+                        </div>
+                        <div class="card-body">
+                            <ul class="top-authors-list" id="topAuthorsList">
+                                <li class="loading">Yükleniyor...</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Tür Dağılımı</h3>
+                        </div>
+                        <div class="card-body">
+                            <ul class="type-dist-list" id="typeDistList">
+                                <li class="loading">Yükleniyor...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Records Page -->
+            <section class="page" id="page-records">
+                <div class="page-toolbar">
+                    <div class="toolbar-left">
+                        <a href="/ocr" class="btn btn-primary" id="addRecordBtn">+ Yeni Kayıt</a>
+                    </div>
+                    <div class="toolbar-center search-wrapper">
+                        <input type="text" class="search-input" id="recordsSearch" placeholder="Kayıtlarda ara...">
+                        <button class="clear-btn" data-target="recordsSearch"
+                            aria-label="Aramayı temizle">&times;</button>
+                    </div>
+                    <div class="toolbar-right">
+                        <select class="select-input" id="recordsSort">
+                            <option value="a_z">A-Z</option>
+                            <option value="z_a">Z-A</option>
+                            <option value="new_to_old">Yeniden Eskiye</option>
+                            <option value="old_to_new">Eskiden Yeniye</option>
+                            <option value="year_desc">Yıl (Azalan)</option>
+                            <option value="year_asc">Yıl (Artan)</option>
+                        </select>
+                        <select class="select-input" id="recordsType">
+                            <option value="">Tüm Türler</option>
+                            <option value="book">Kitap</option>
+                            <option value="article">Makale</option>
+                            <option value="newspaper">Gazete</option>
+                            <option value="encyclopedia">Ansiklopedi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="bulkActionBar" class="bulk-action-bar"
+                    style="display: none; align-items: center; justify-content: space-between; background: var(--accent-soft); padding: 10px 20px; border: 1px solid var(--accent-primary); border-radius: var(--radius-md); margin-bottom: 10px;">
+                    <div class="bulk-info" style="color: var(--accent-primary); font-weight: 600;">
+                        <span id="selectedCount">0</span> kayıt seçildi
+                    </div>
+                    <div class="bulk-actions" style="display: flex; gap: 10px;">
+                        <button class="btn btn-danger btn-sm" id="bulkDeleteBtn">Toplu Sil</button>
+                        <button class="btn btn-secondary btn-sm" id="bulkExportBtn">Toplu ZIP</button>
+                        <button class="btn btn-icon btn-sm" id="cancelSelectionBtn">✕</button>
+                    </div>
+                </div>
+
+                <div class="records-container">
+                    <table class="data-table" id="recordsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox" id="selectAllRecords"></th>
+                                <th>Başlık</th>
+                                <th>Yazar</th>
+                                <th>Tür</th>
+                                <th>Detaylar</th>
+                                <th>Yıl</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                            <tr>
+                                <td colspan="6" class="loading">Yükleniyor...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="recordsPagination">
+                    <button class="btn btn-icon" id="prevPageBtn" disabled>
+                        <span class="material-symbols-rounded">chevron_left</span>
+                    </button>
+                    <span class="page-info" id="pageInfo">Sayfa 1 / 1</span>
+                    <button class="btn btn-icon" id="nextPageBtn" disabled>
+                        <span class="material-symbols-rounded">chevron_right</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Authors Page -->
+            <section class="page" id="page-authors">
+                <div class="page-toolbar">
+                    <div class="toolbar-left">
+                        <span class="toolbar-title">Yazarlar Listesi</span>
+                    </div>
+                    <div class="toolbar-center search-wrapper">
+                        <input type="text" class="search-input" id="authorsSearch" placeholder="Yazar ara...">
+                        <button class="clear-btn" data-target="authorsSearch"
+                            aria-label="Aramayı temizle">&times;</button>
+                    </div>
+                    <div class="toolbar-right">
+                        <select class="select-input" id="authorsSort">
+                            <option value="a_z">A-Z</option>
+                            <option value="z_a">Z-A</option>
+                            <option value="doc_count">Eser Sayısı</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="authors-grid" id="authorsGrid">
+                    <div class="loading">Yükleniyor...</div>
+                </div>
+            </section>
+
+
+            <!-- Search Page -->
+            <section class="page" id="page-search">
+                <div class="search-box">
+                    <div class="search-row">
+                        <select class="select-input" id="searchField">
+                            <option value="all">Tümünde Ara</option>
+                            <option value="title">Eser Adı</option>
+                            <option value="author">Yazar</option>
+                            <option value="year">Yıl</option>
+                        </select>
+
+                        <div class="search-wrapper" style="flex: 1;">
+                            <input type="text" class="search-input large" id="globalSearch"
+                                placeholder="Arama terimi girin...">
+                            <button class="clear-btn" data-target="globalSearch"
+                                aria-label="Aramayı temizle">&times;</button>
+                        </div>
+
+                        <button class="btn btn-primary" id="searchBtn">Ara</button>
+                    </div>
+                </div>
+
+                <div class="search-results" id="searchResults">
+                    <p class="search-hint">Arama yapmak için yukarıdaki kutuyu kullanın.</p>
+                </div>
+            </section>
+
+            <!-- Export/Import Page -->
+            <section class="page" id="page-export">
+                <div class="export-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Dışa Aktar (Export)</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-desc">Veritabanindaki Kayıtları JSON veya CSV formatında indirebilirsiniz.
+                            </p>
+                            <div class="button-group">
+                                <button class="btn btn-primary" id="exportJsonBtn">
+                                    <span class="material-symbols-rounded">data_object</span> JSON İndir
+                                </button>
+                                <button class="btn btn-secondary" id="exportCsvBtn">
+                                    <span class="material-symbols-rounded">csv</span> CSV İndir
+                                </button>
+                                <button class="btn btn-success" id="exportExcelBtn"
+                                    style="background-color: #107c41; color: white; border: none;">
+                                    <span class="material-symbols-rounded">table_view</span> Excel İndir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>İçe Aktar (Import)</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-desc">JSON formatinda veri dosyası yükleyerek Kayıtları içe aktarabilirsiniz.
+                            </p>
+                            <div class="file-upload">
+                                <input type="file" id="importFile" accept=".json" hidden>
+                                <button class="btn btn-primary" id="importBtn">Dosya Seç</button>
+                                <span class="file-name" id="fileName">Dosya seçilmedi</span>
+                            </div>
+                            <button class="btn btn-success" id="startImportBtn" disabled>İçe Aktarmaya Başla</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+
+        </div>
+    </main>
+
+    <!-- Record Detail Modal -->
+    <div class="modal" id="recordModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2 id="modalTitle">Kayıt Detayı</h2>
+                <button class="btn btn-icon modal-close" id="closeModalBtn">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-tabs">
+                    <button class="tab-btn active" data-tab="metadata">Metadata</button>
+                    <button class="tab-btn" data-tab="file">Dosya Önizleme</button> <button class="tab-btn"
+                        data-tab="markdown">Markdown</button>
+                    <button class="tab-btn" data-tab="xml">XML</button>
+                </div>
+
+                <!-- Metadata Tab -->
+                <div class="tab-content active" id="tab-metadata">
+                    <form id="metadataForm">
+                        <input type="hidden" id="recordId">
+
+                        <div class="form-group">
+                            <label for="recordTitle">Başlık *</label>
+                            <input type="text" id="recordTitle" class="form-input" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recordAuthor">Yazar</label>
+                                <input type="text" id="recordAuthor" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="recordType">Tür</label>
+                                <select id="recordType" class="form-input">
+                                    <option value="book">Kitap</option>
+                                    <option value="article">Makale</option>
+                                    <option value="newspaper">Gazete</option>
+                                    <option value="encyclopedia">Ansiklopedi</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="recordLanguage">Dil</label>
+                                <input type="text" id="recordLanguage" class="form-input" placeholder="tr, en...">
+                            </div>
+                            <div class="form-group">
+                                <label for="recordCitation">Atıf Stili</label>
+                                <input type="text" id="recordCitation" class="form-input">
+                            </div>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+                        <div id="group-book" class="type-group">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Yayınevi</label>
+                                    <input type="text" id="recordPublisher" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Yayın Şehri</label>
+                                    <input type="text" id="recordCity" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="recordCountry"> Yayınlandığı Ülke</label>
+                                    <input type="text" id="recordCountry" class="form-input"
+                                        placeholder="Türkiye, İngiltere...">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Yıl</label>
+                                    <input type="number" id="recordYear" class="form-input" placeholder="YYYY">
+                                </div>
+                                <div class="form-group">
+                                    <label>Sayfa Sayısı (Page Count)</label>
+                                    <input type="number" id="recordPageCount" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Cilt (Volume)</label>
+                                    <input type="text" id="recordVolume" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Baskı (Edition)</label>
+                                    <input type="text" id="recordEdition" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>ISBN</label>
+                                    <input type="text" id="recordISBN" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Editör / Hazırlayan</label>
+                                    <input type="text" id="recordEditor" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Seri (Series)</label>
+                                    <input type="text" id="recordSeries" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Seri Başlığı</label>
+                                    <input type="text" id="recordSeriesTitle" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Seri Metni (Series Text)</label>
+                                <input type="text" id="recordSeriesText" class="form-input">
+                            </div>
+                        </div>
+
+                        <div id="group-article" class="type-group" style="display:none;">
+                            <div class="form-group">
+                                <label>Yayın/Dergi Adı</label>
+                                <input type="text" id="recordPublication" class="form-input">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Tam Tarih (Date)</label>
+                                    <input type="date" id="recordArticleDate" class="form-input">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Sayı (Issue)</label>
+                                    <input type="text" id="recordIssue" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Dergi Kısaltması</label>
+                                    <input type="text" id="recordJournalAbbr" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>DOI</label>
+                                    <input type="text" id="recordDOI" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>ISSN</label>
+                                    <input type="text" id="recordISSN" class="form-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="group-newspaper" class="type-group" style="display:none;">
+                            <div class="form-group">
+                                <label>Gazete Adı</label>
+                                <input type="text" id="recordNewspaperName" class="form-input">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Tam Tarih</label>
+                                    <input type="date" id="recordNewspaperDate" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Yayın Yeri</label>
+                                    <input type="text" id="recordPubPlace" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Bölüm (Section)</label>
+                                    <input type="text" id="recordSection" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Köşe Adı</label>
+                                    <input type="text" id="recordColumnName" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Sayfa Aralığı</label>
+                                    <input type="text" id="recordPageRange" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label>Sayfa (Pages Integer)</label>
+                                    <input type="number" id="recordPagesInt" class="form-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="group-encyclopedia" class="type-group" style="display:none;">
+                            <div class="form-group">
+                                <label>Ansiklopedi Başlığı</label>
+                                <input type="text" id="recordEncTitle" class="form-input">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Basım Tarihi (Date)</label>
+                                <input type="date" id="recordEncyclopediaDate" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Kısa Başlık</label>
+                                <input type="text" id="recordShortTitle" class="form-input">
+                            </div>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>URL / Web Linki</label>
+                                <input type="text" id="recordUrl" class="form-input" placeholder="https://...">
+                            </div>
+                            <div class="form-group">
+                                <label>Erişim Tarihi (Access Date)</label>
+                                <input type="date" id="recordAccessDate" class="form-input">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Arşiv / Kütüphane</label>
+                                <input type="text" id="recordArchive" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Arşiv Konumu</label>
+                                <input type="text" id="recordArchiveLoc" class="form-input">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Kütüphane Kataloğu</label>
+                                <input type="text" id="recordLibCatalog" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label>Çağrı Numarası</label>
+                                <input type="text" id="recordCallNumber" class="form-input">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Haklar (Rights)</label>
+                            <input type="text" id="recordRights" class="form-input">
+                        </div>
+
+                        <div class="form-group full">
+                            <label for="recordDescription">Açıklama</label>
+                            <textarea id="recordDescription" class="form-input" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="tab-content" id="tab-file">
+                    <div class="file-actions" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="file" id="uploadSourceInput" hidden accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif">
+
+                        <button class="btn btn-warning" id="uploadSourceBtn">
+                            <span class="material-symbols-rounded">upload_file</span> Yükle / Değiştir
+                        </button>
+                        <button class="btn btn-primary" id="downloadSourceBtn">
+                            <span class="material-symbols-rounded">download</span> İndir
+                        </button>
+                        <button class="btn btn-secondary" id="fullScreenBtn">
+                            <span class="material-symbols-rounded">fullscreen</span> Tam Ekran
+                        </button>
+                    </div>
+                    <div class="file-viewer-container" style="height: 500px; border: 1px solid #333; background: #000;">
+                        <iframe id="fileViewerFrame" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                </div>
+
+                <!-- Markdown Tab -->
+                <div class="tab-content" id="tab-markdown">
+                    <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+                        <input type="file" id="uploadMdInput" hidden accept=".md,.txt">
+
+                        <button class="btn btn-warning" id="uploadMdBtn">
+                            <span class="material-symbols-rounded">upload_file</span> MD Yükle
+                        </button>
+                        <button class="btn btn-secondary" id="downloadMdBtn">
+                            <span class="material-symbols-rounded">download</span> İndir
+                        </button>
+                    </div>
+                    <textarea id="markdownEditor" class="code-editor" placeholder="Markdown içeriği..."></textarea>
+                </div>
+
+                <!-- XML Tab -->
+                <div class="tab-content" id="tab-xml">
+                    <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+                        <input type="file" id="uploadXmlInput" hidden accept=".xml">
+
+                        <button class="btn btn-warning" id="uploadXmlBtn">
+                            <span class="material-symbols-rounded">upload_file</span> XML Yükle
+                        </button>
+                        <button class="btn btn-secondary" id="downloadXmlBtn">
+                            <span class="material-symbols-rounded">download</span> İndir
+                        </button>
+                    </div>
+                    <textarea id="xmlEditor" class="code-editor" placeholder="XML içeriği..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="deleteRecordBtn">Sil</button>
+
+                <div class="spacer"></div>
+
+                <button class="btn btn-warning" id="downloadZipBtn" title="Tüm dosyaları paket olarak indir">
+                    <span class="material-symbols-rounded">folder_zip</span> Paket İndir (ZIP)
+                </button>
+
+                <button class="btn btn-secondary" id="cancelModalBtn">İptal</button>
+                <button class="btn btn-primary" id="saveRecordBtn">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <span class="toast-message" id="toastMessage"></span>
+    </div>
+
+    <div class="progress-overlay" id="progressOverlay">
+        <div class="progress-box">
+            <h3 id="progressTitle">İşleniyor...</h3>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+            <div class="progress-stats">
+                <span id="progressText">0%</span>
+                <span id="progressSize">- / -</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>

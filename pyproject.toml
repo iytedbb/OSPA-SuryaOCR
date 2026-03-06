@@ -1,0 +1,57 @@
+[project]
+name = "ospa-suryaocr"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # Ön işleme dependencies
+    "deskew>=1.5.3",
+    "doclayout-yolo>=0.0.4",
+    "py-reform>=0.1.0",
+    # Core dependencies
+    "huggingface-hub>=0.35.0",
+    "numpy<2.2.0",
+    "opencv-python>=4.11.0.86",
+    "opencv-python-headless>=4.11.0.86",
+    "pillow==10.4.0",
+    "pymupdf>=1.26.4",
+    "scipy<1.16.2",
+    "ultralytics>=8.3.0",
+    # PyTorch - CUDA 12.6 specific
+    "torch>=2.7.1",
+    "torchvision>=0.22.1",
+    "torchaudio>=2.7.1",
+    # Web framework
+    "flask>=3.1.2",
+    "flask-cors>=6.0.1",
+    "flask-sqlalchemy>=3.1.1",
+    "flask-migrate>=4.0.7",
+    # SuryaOCR
+    "surya-ocr==0.17.0",
+    "transformers==4.56.1",
+    # Database
+    "sqlalchemy>=2.0.43",
+    "psycopg2-binary>=2.9.10",
+    # GUI (optional)
+    "pyside6>=6.9.3",
+    "ttkbootstrap>=1.14.2",
+    # Text processing
+    "fuzzywuzzy>=0.18.0",
+    "python-levenshtein>=0.27.1",
+    # Document processing
+    "pdf2image>=1.17.0",
+    "img2pdf>=0.6.1",
+    # Utilities
+    "hf-xet>=1.1.10",
+    "streamlit>=1.50.0",
+    "fastapi>=0.119.1",
+    "uvicorn>=0.38.0",
+    "python-multipart>=0.0.20",
+    "wikipedia>=1.4.0",
+    "rapidfuzz>=3.14.1",
+    "pypdfium2>=4.30.0",
+    "pip>=25.3",
+    "pdftext>=0.6.3",
+    "openpyxl>=3.1.5",
+]

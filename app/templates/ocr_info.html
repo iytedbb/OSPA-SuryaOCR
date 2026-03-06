@@ -1,0 +1,3482 @@
+﻿<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="OSPA - SuryaOCR Pro - Tarihsel belgeler için geliştirilmiş, %80-88 doğruluk oranına sahip gelişmiş OCR sistemi. Layout analizi, çok dilli destek ve akademik standartlarda dijitalleştirme.">
+    <meta name="keywords"
+        content="OCR, Optical Character Recognition, Tarihsel Belge, Layout Analizi, Türkçe OCR, SuryaOCR, Datalab-to, Document Processing">
+    <title>OSPA - SuryaOCR Pro | Tarihsel Belgeler İçin Geliştirilmiş OCR Sistemi</title>
+    <link rel="icon" href="/static/o-ospa.png" type="image/png">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#b93632',
+                            dark: '#8e2825',
+                            light: '#d64d48',
+                            50: '#fef2f2',
+                            20: 'rgba(185, 54, 50, 0.2)'
+                        },
+                        cream: '#fdfbf7',
+                        text: {
+                            main: '#2d3436',
+                            secondary: '#636e72',
+                        }
+                    },
+                    fontFamily: {
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                        body: ['"Inter"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    animation: {
+                        'spin-slow': 'spin 8s linear infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'slideUp': 'slideUp 0.8s ease-out both',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-red: #b93632;
+            --primary-red-dark: #8e2825;
+            --primary-red-light: #d64d48;
+            --accent-blue: #0EA5E9;
+            --accent-green: #10B981;
+            --accent-yellow: #F59E0B;
+            --accent-purple: #8B5CF6;
+            --gray-900: #1a1a2e;
+            --gray-800: #2d3436;
+            --gray-700: #3d3d3d;
+            --gray-600: #555555;
+            --gray-500: #636e72;
+            --gray-400: #7f8c8d;
+            --gray-300: #b2bec3;
+            --gray-200: #dfe6e9;
+            --gray-100: #f0f0f0;
+            --white: #FFFFFF;
+            --gradient-primary: linear-gradient(135deg, #b93632 0%, #d64d48 100%);
+            --gradient-dark: linear-gradient(135deg, #fdfbf7 0%, #f5f0eb 100%);
+            --gradient-accent: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfbf7;
+            color: #2d3436;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Glass Navigation - matching landing.html */
+        .glass-nav {
+            background: rgba(253, 251, 247, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(185, 54, 50, 0.1);
+        }
+
+        /* Neural Background Canvas - matching landing.html */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.25;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+        }
+
+        /* Navigation */
+        .navbar {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            background: rgba(253, 251, 247, 0.98);
+            box-shadow: 0 4px 20px rgba(185, 54, 50, 0.08);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--gray-800);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-red-dark));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
+        }
+
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%) scale(0);
+            border-radius: 50%;
+            transition: transform 0.5s ease;
+        }
+
+        .logo:hover .logo-icon::before {
+            transform: translate(-50%, -50%) scale(2);
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-red);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--gray-800);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active {
+            color: var(--primary-red);
+        }
+
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        /* Sayfa içi anchor linkleri için yeni stil */
+        .nav-link-anchor {
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--gray-500);
+            position: relative;
+            /* Animasyon için pozisyon eklendi */
+            padding: 0.25rem 0;
+            /* Daha uygun dikey boşluk ayarı */
+        }
+
+        .nav-link-anchor:hover {
+            color: var(--gray-800);
+        }
+
+        /* Alt çizgi animasyonu eklendi */
+        .nav-link-anchor::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gray-600);
+            transition: width 0.3s ease;
+            /* Animasyon süresi */
+        }
+
+        .nav-link-anchor:hover::after {
+            /* ocr_info'daki kırmızı yerine bu sayfanın mor temasını kullanıyoruz */
+            background: var(--primary-purple);
+            width: 100%;
+            /* Animasyonun bitiş genişliği */
+        }
+
+        .nav-cta {
+            background: var(--primary-red);
+            color: var(--white);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(220, 20, 60, 0.3);
+            white-space: nowrap;
+            /* Taşmayı önler */
+        }
+
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(220, 20, 60, 0.4);
+        }
+
+        /* Dropdown Menu Styles */
+        .nav-link .nav-arrow {
+            font-size: 0.7rem;
+            /* İkon boyutunu ayarlar */
+            margin-left: 0.3rem;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item-dropdown {
+            position: relative;
+            /* Açılır menünün bu öğeye göre konumlanmasını sağlar */
+        }
+
+        .dropdown-menu {
+            display: none;
+            /* Varsayılan olarak gizli */
+            position: absolute;
+            top: 100%;
+            /* Ana öğenin hemen altında */
+            left: 50%;
+            /* Yatayda ortalamak için */
+            transform: translateX(-50%) translateY(10px);
+            /* Ortala ve küçük bir boşluk bırak */
+            min-width: max-content;
+            /* İçeriğe göre genişlik */
+            background: rgba(255, 255, 255, 0.98);
+            /* Navbar ile aynı arkaplan */
+            border: 1px solid rgba(185, 54, 50, 0.1);
+            /* Ana temaya uygun border */
+            border-radius: 12px;
+            /* Tasarımla uyumlu köşe yuvarlatma */
+            box-shadow: 0 8px 25px rgba(220, 20, 60, 0.15);
+            /* Hafif bir gölge */
+            padding: 0.5rem;
+            z-index: 1100;
+            /* Diğer öğelerin üstünde kalması için */
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+            /* Yumuşak animasyon */
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--gray-400);
+            text-decoration: none;
+            white-space: nowrap;
+            /* Metnin tek satırda kalmasını sağlar */
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            /* İç öğeler için köşe yuvarlatma */
+            font-size: 0.95rem;
+        }
+
+        .dropdown-menu a:hover {
+            color: var(--gray-800);
+            background: rgba(220, 20, 60, 0.15);
+            /* Vurgu rengiyle uyumlu hover efekti */
+        }
+
+        /* Hover durumunda menüyü göster */
+        .nav-item-dropdown:hover>.dropdown-menu {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+            /* Yukarı kayma efekti */
+        }
+
+        /* Hover durumunda oku döndür */
+        .nav-item-dropdown:hover>.nav-link .nav-arrow {
+            transform: rotate(180deg);
+        }
+
+        /* End Dropdown Menu Styles */
+
+        /* Hero Demo Box Tabs (Başlık Yanı Stili) */
+        .demo-box-header {
+            display: flex;
+            justify-content: space-between;
+            /* Başlığı sola, sekmeleri sağa iter */
+            align-items: center;
+            /* Dikeyde ortalar */
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            /* Çizgiyi buraya taşıdık */
+            margin-bottom: 1rem;
+            /* Boşluğu buraya taşıdık */
+            position: relative;
+            z-index: 2;
+            /* Parıldama efektinin (z-index: 1) üstünde kalması için */
+        }
+
+        .demo-tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            /* margin-bottom, border-bottom, position, z-index kaldırıldı (yukarıya taşındı) */
+        }
+
+        .demo-tab-link {
+            background: transparent;
+            border: none;
+            color: var(--gray-500);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.75rem 0.5rem;
+            /* Sağa/sola padding azaltıldı */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            /* top: 1px kaldırıldı */
+            border-bottom: 2px solid transparent;
+            /* Pasif durum için şeffaf border */
+        }
+
+        .demo-tab-link:hover {
+            color: var(--gray-800);
+        }
+
+        .demo-tab-link.active {
+            color: var(--primary-red);
+            border-bottom-color: var(--primary-red);
+            /* Sadece border rengini değiştir */
+        }
+
+        /* Tab content styling */
+        .demo-tab-content-wrapper {
+            position: relative;
+        }
+
+        .demo-tab-content {
+            display: none;
+            /* Varsayılan olarak gizli */
+            animation: tabFadeIn 0.5s ease;
+        }
+
+        .demo-tab-content.active {
+            display: block;
+            /* Aktif olanı göster */
+        }
+
+        /* Sekme değiştirildiğinde kutunun "zıplamasını" engellemek için 
+           giriş kutusuyla (350px) aynı yüksekliği veriyoruz. */
+        .demo-box.output .demo-text {
+            height: 350px;
+            overflow-y: auto;
+            /* Gerekirse kaydırma çubuğu çıkar */
+
+            /* Kaydırma çubuğu stilleri */
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-red) rgba(0, 0, 0, 0.08);
+        }
+
+        .demo-box.output .demo-text::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .demo-box.output .demo-text::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 4px;
+        }
+
+        .demo-box.output .demo-text::-webkit-scrollbar-thumb {
+            background-color: var(--primary-red);
+            border-radius: 4px;
+        }
+
+        @keyframes tabFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* End Hero Demo Box Tabs */
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-container {
+            max-width: 1400px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-content {
+            z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(220, 20, 60, 0.1);
+            border: 1px solid rgba(220, 20, 60, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .hero-badge i {
+            color: var(--primary-red);
+        }
+
+        .hero-badge span {
+            color: var(--primary-red);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .hero-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero-title .highlight {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-400);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            animation: fadeInUp 1s ease 0.2s both;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 1s ease 0.4s both;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-red);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            animation: fadeInUp 1s ease 0.6s both;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: var(--white);
+            box-shadow: 0 10px 30px rgba(220, 20, 60, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(220, 20, 60, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--gray-800);
+            border: 2px solid rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Hero Visual */
+        .hero-visual {
+            position: relative;
+            animation: fadeInRight 1s ease;
+        }
+
+        .ocr-demo {
+            position: relative;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        .ocr-demo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(220, 20, 60, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .demo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .demo-title {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .demo-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 50px;
+            color: var(--accent-green);
+            font-size: 0.875rem;
+        }
+
+        .demo-status .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .demo-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .demo-box {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-box-title {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .demo-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--gray-400);
+        }
+
+        .demo-box.output .demo-text {
+            color: var(--gray-300);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 2rem;
+            background: rgba(255, 255, 255, 0.4);
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-red);
+            border: 1px solid rgba(52, 1, 1, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            margin-bottom: 1rem;
+            color: var(--white);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--gray-400);
+            line-height: 1.6;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(185, 54, 50, 0.08);
+            border: 1px solid rgba(185, 54, 50, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            color: var(--primary-red);
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-description {
+            color: var(--gray-400);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            color: var(--gray-400);
+            font-size: 0.95rem;
+        }
+
+        .feature-list i {
+            color: var(--accent-green);
+            font-size: 0.75rem;
+        }
+
+        /* Comparison Section */
+        .comparison {
+            padding: 6rem 2rem;
+            background: linear-gradient(180deg, transparent 0%, rgba(185, 54, 50, 0.03) 100%);
+        }
+
+        .comparison-table-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-x: auto;
+        }
+
+        .comparison-table {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .comparison-table thead {
+            background: rgba(185, 54, 50, 0.06);
+        }
+
+        .comparison-table th {
+            padding: 1.5rem 2rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--gray-800);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .comparison-table td {
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            color: var(--gray-400);
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .comparison-table .highlight-row {
+            background: rgba(220, 20, 60, 0.05);
+        }
+
+        .comparison-table .highlight-row td:first-child {
+            color: var(--primary-red);
+            font-weight: 700;
+        }
+
+        .badge-success {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 50px;
+            color: var(--accent-green);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .badge-warning {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 50px;
+            color: var(--accent-yellow);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .badge-error {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 50px;
+            color: #EF4444;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        /* Process Section */
+        .process {
+            padding: 6rem 2rem;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .process-timeline {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, transparent 0%, rgba(185, 54, 50, 0.15) 50%, transparent 100%);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 4rem;
+            align-items: center;
+            position: relative;
+        }
+
+        .timeline-item:nth-child(even) {
+            direction: rtl;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content {
+            direction: ltr;
+            text-align: left;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: var(--primary-red);
+            border: 4px solid #fdfbf7;
+            border-radius: 50%;
+            z-index: 2;
+            box-shadow: 0 0 0 8px rgba(185, 54, 50, 0.08);
+        }
+
+        .timeline-content {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-content:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .timeline-number {
+            display: inline-flex;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            background: rgba(185, 54, 50, 0.08);
+            border: 1px solid rgba(185, 54, 50, 0.15);
+            border-radius: 10px;
+            color: var(--primary-red);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.75rem;
+        }
+
+        .timeline-description {
+            color: var(--gray-400);
+            line-height: 1.6;
+        }
+
+        .timeline-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timeline-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Technology Stack */
+        .tech-stack {
+            padding: 6rem 2rem;
+            background: linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.05) 100%);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 3rem auto 0;
+        }
+
+        .tech-item {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .tech-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-red);
+        }
+
+        .tech-name {
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+        }
+
+        .tech-version {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        /* Results Section */
+        .results {
+            padding: 6rem 2rem;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .results-showcase {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .result-percentage {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 4rem;
+            font-weight: 900;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .result-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.75rem;
+        }
+
+        .result-description {
+            color: var(--gray-400);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-comparison {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .comparison-item {
+            text-align: center;
+        }
+
+        .comparison-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .comparison-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-400);
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 8rem 2rem;
+            background: linear-gradient(135deg, rgba(220, 20, 60, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(220, 20, 60, 0.05) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            animation: rotate 30s linear infinite;
+        }
+
+        .cta-content {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .cta-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-400);
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        /* Girdi Kutusu: YENİ Tarama Efekti (Lazer Çubuğu) */
+        .document-page {
+            position: relative;
+            /* Tarayıcı çubuğunu konumlandırmak için gerekli */
+            width: 100%;
+            height: 390px;
+            overflow: hidden;
+            /* Çubuğun sayfa dışına taşmasını engelle */
+            border-radius: 6px;
+            /* document-page-inner ile uyumlu */
+        }
+
+        .document-page-inner {
+            position: relative;
+            width: 100%;
+            height: auto;
+            background-color: #FFF;
+            box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.25);
+            overflow: auto;
+            border-radius: 4px;
+        }
+
+        /* İstediğiniz tarayıcı çubuğu */
+        .scan-bar {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            height: 5px;
+            background: rgb(255, 0, 0);
+            /* 'color-mix' yerine direkt renk */
+            border-radius: 4px;
+            z-index: 11;
+            /* Resmin (z-index: 1) üstünde olmalı */
+            animation: scan 3s ease-in-out infinite;
+        }
+
+        /* Yeni Keyframe: 440px yüksekliğe ayarlandı */
+        @keyframes scan {
+            0% {
+                transform: translateX(-50%) translateY(0px);
+                box-shadow: 0px 4px 12px 0px rgb(255, 0, 0);
+            }
+
+            50% {
+                /* 440px yükseklik - 5px çubuk yüksekliği = 435px */
+                transform: translateX(-50%) translateY(390px);
+                box-shadow: 0px 4px 12px 0px rgb(255, 0, 0);
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(0px);
+                box-shadow: 0px 4px 12px 0px rgb(255, 0, 0);
+            }
+        }
+
+        /* Çıktı Kutusu için "Parıldama" (Shimmer) Efekti - GÜÇLENDİRİLDİ */
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%) skewX(-15deg);
+            }
+
+            100% {
+                transform: translateX(200%) skewX(-15deg);
+            }
+        }
+
+        .shimmer-effect {
+            position: relative;
+            overflow: hidden;
+            /* Parıldamanın kutu dışına taşmasını engeller */
+        }
+
+        .shimmer-effect::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.1) 20%,
+                    rgba(255, 255, 255, 0.2) 60%,
+                    rgba(255, 255, 255, 0) 100%);
+            transform: translateX(-100%);
+            z-index: 1;
+            /* Animasyon: 3 saniyede bir, 1 saniye gecikmeyle başla */
+            animation: shimmer 3s ease-in-out 1s infinite;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--gray-800);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-title {
+                font-size: 3rem;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-socials {
+                justify-content: center;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .timeline-item {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline-line {
+                left: 20px;
+            }
+
+            .timeline-dot {
+                left: 20px;
+            }
+
+            .timeline-item:nth-child(even) {
+                direction: ltr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Code Block Styling */
+        .code-block {
+            background: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-primary);
+            border-radius: 4px;
+            transition: width 2s ease;
+        }
+
+        /* Tooltip */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1rem;
+            background: var(--gray-800);
+            color: var(--white);
+            font-size: 0.875rem;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        [data-tooltip]:hover::after {
+            opacity: 1;
+        }
+
+        /* Scroll to Top Button */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.25rem;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(220, 20, 60, 0.3);
+            z-index: 999;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(220, 20, 60, 0.4);
+        }
+
+        /* Brand Specific Buttons */
+        .btn-hf {
+            background-color: #FFD21E !important;
+            color: #000000 !important;
+            border: 2px solid #FFD21E !important;
+            box-shadow: 0 4px 12px rgba(255, 210, 30, 0.2);
+        }
+
+        .btn-hf:hover {
+            background-color: #fbc02d !important;
+            transform: translateY(-3px) rotate(-1deg) scale(1.05);
+            box-shadow: 0 10px 25px rgba(255, 210, 30, 0.35) !important;
+        }
+
+        .btn-github {
+            background-color: #24292e !important;
+            color: #ffffff !important;
+            border: 2px solid #24292e !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-github:hover {
+            background-color: #1a1e22 !important;
+            transform: translateY(-3px) rotate(1deg) scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25) !important;
+        }
+
+
+        /* --- ANİMASYON STİLLERİ BAŞLANGIÇ --- */
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Not: Bu değişkenin (:root içinde) tanımlı olması gerekir */
+            background: var(--gradient-mesh, radial-gradient(circle at 20% 20%, #FEF2F2 0%, transparent 70%), radial-gradient(circle at 80% 80%, #FEF2F2 0%, transparent 70%));
+            opacity: 0.4;
+            z-index: -1;
+            animation: mesh-float 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        /* Neural Network Canvas */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        /* Keyframe Animations */
+        @keyframes mesh-float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            33% {
+                transform: translate(-20px, -10px) rotate(1deg);
+            }
+
+            66% {
+                transform: translate(10px, -20px) rotate(-1deg);
+            }
+        }
+
+        /* --- YENİ EKLENEN FOOTER STİLLERİ --- */
+        footer {
+            background: #ffffff;
+            /* Değişken yoksa diye yedek renk */
+            color: var(--gray-600, #555);
+            padding: var(--space-12, 3rem) var(--space-6, 1.5rem) var(--space-8, 2rem);
+            margin-top: var(--space-16, 4rem);
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-8, 2rem);
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-bottom: var(--space-8, 2rem);
+        }
+
+        .footer-brand {
+            grid-column: span 1;
+        }
+
+        @media (min-width: 1024px) {
+            .footer-brand {
+                padding-right: var(--space-8, 2rem);
+            }
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3, 0.75rem);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--gray-800, #2d3436);
+            text-decoration: none;
+            font-family: var(--font-display, sans-serif);
+            margin-bottom: var(--space-4, 1rem);
+            transition: color var(--duration-2, 300ms) var(--ease-2, ease);
+        }
+
+        .footer-logo:hover {
+            color: var(--primary-red-light, #EF4444);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary, #DC143C);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--white, #fff);
+        }
+
+        .footer-description {
+            color: var(--gray-400, #aaa);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-bottom: var(--space-6, 1.5rem);
+            max-width: 500px;
+        }
+
+        .footer-socials {
+            display: flex;
+            align-items: center;
+            gap: var(--space-5, 1.25rem);
+        }
+
+        .social-link {
+            color: var(--gray-400, #aaa);
+            font-size: 1.6rem;
+            transition: all var(--duration-2, 300ms) var(--ease-2, ease);
+        }
+
+        .social-link:hover {
+            color: var(--primary-red, #DC143C);
+            transform: translateY(-2px);
+        }
+
+        .footer-socials img {
+            transition: all var(--duration-2, 300ms) var(--ease-2, ease);
+            filter: none;
+        }
+
+        .footer-socials img:hover {
+            filter: grayscale(0%) brightness(1);
+            transform: translateY(-2px);
+        }
+
+        .footer-section h4,
+        .footer-links h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--gray-800, #2d3436);
+            font-family: var(--font-display, sans-serif);
+            margin-bottom: var(--space-6, 1.5rem);
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3, 0.75rem);
+            list-style: none;
+            padding: 0;
+            /* Liste stilini sıfırla */
+            margin: 0;
+            /* Liste stilini sıfırla */
+        }
+
+        .footer-links a,
+        .footer-links li>a {
+            color: var(--gray-400, #aaa);
+            text-decoration: none;
+            transition: all var(--duration-2, 300ms) var(--ease-2, ease);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2, 0.5rem);
+            font-weight: 500;
+        }
+
+        .footer-links li {
+            list-style: none;
+            /* Ekstra güvenlik */
+        }
+
+        .footer-links a:hover,
+        .footer-links li>a:hover {
+            color: var(--primary-red-light, #EF4444);
+            padding-left: var(--space-2, 0.5rem);
+        }
+
+        .footer-links img {
+            filter: none;
+            transition: all var(--duration-2, 300ms) var(--ease-2, ease);
+        }
+
+        .footer-links a:hover img {
+            filter: grayscale(0%) brightness(1);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            padding-top: var(--space-6, 1.5rem);
+            margin-top: var(--space-8, 2rem);
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--gray-500, #888);
+            line-height: 1.7;
+        }
+
+        .footer-bottom p {
+            margin: 0;
+            margin-bottom: var(--space-2, 0.5rem);
+        }
+
+        /* Scroll to Top Button */
+        .scroll-to-top {
+            position: fixed;
+            bottom: var(--space-6, 1.5rem);
+            right: var(--space-6, 1.5rem);
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-primary, #DC143C);
+            color: var(--white, #fff);
+            border: none;
+            border-radius: 50%;
+            box-shadow: var(--shadow-neural, 0 10px 15px -3px rgba(220, 20, 60, 0.4));
+            cursor: pointer;
+            transition: all var(--duration-3, 500ms) var(--ease-2, ease);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+
+            /* Başlangıçta gizli */
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .scroll-to-top.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: var(--shadow-6, 0 25px 50px -12px rgba(0, 0, 0, 0.25));
+        }
+
+        /* === ZAMAN ÇİZELGESİ ANİMASYONLARI (OCR-INFO) === */
+
+        /* 1. TUTARLILIK: Görsel kutusunu (.timeline-visual) 
+              metin kutusuyla (.timeline-content) aynı yap */
+        .timeline-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 166px;
+            position: relative;
+
+            /* .timeline-content'den kopyalanan stil */
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            /* Taşmaları engelle */
+        }
+
+        .timeline-visual:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(185, 54, 50, 0.1);
+        }
+
+        /* 2. Yeniden Kullanılabilir Belge Stili (Tüm adımlar için) */
+        .ocr-step-stage {
+            position: relative;
+            perspective: 400px;
+            width: 150px;
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .doc-visual {
+            width: 100%;
+            height: 100%;
+            background: var(--gray-200);
+            border-radius: 4px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform-style: preserve-3d;
+            /* 3D animasyon için şart */
+        }
+
+        .doc-line,
+        .doc-line-title,
+        .doc-line-short {
+            height: 8px;
+            background: var(--gray-500);
+            border-radius: 4px;
+        }
+
+        .doc-line-title {
+            width: 60%;
+        }
+
+        .doc-line {
+            width: 100%;
+        }
+
+        .doc-line-short {
+            width: 80%;
+        }
+
+
+        /* 3. Adım 1: Ön İşleme (PyReform) Animasyonu */
+        .ocr-step-1-anim {
+            /* 5 saniyelik, yumuşak bir döngü */
+            animation: pyreform-process 5s infinite ease-in-out;
+        }
+
+        @keyframes pyreform-process {
+
+            /* 0-20%: İyi Hali (Net, Düz) */
+            0%,
+            20% {
+                /* Düz */
+                transform: rotateX(0deg) rotateY(0deg);
+                /* Net (Kontrast, Parlaklık, Opaklık) */
+                filter: contrast(1) brightness(1) opacity(1);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+
+            /* 50%: Bozuk Hali (Eğik, Soluk, Düşük Kontrast) */
+            50% {
+                /* Eğik (Perspektif Düzeltme) */
+                transform: rotateX(15deg) rotateY(-25deg);
+                /* Soluk (Bilateral/CLAHE) */
+                filter: contrast(0.7) brightness(1.2) opacity(0.7);
+                /* Havada gölgesi */
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            }
+
+            /* 70-100%: İyi Hali (Düzeltilmiş) */
+            70%,
+            100% {
+                transform: rotateX(0deg) rotateY(0deg);
+                filter: contrast(1) brightness(1) opacity(1);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        /* Adım 2: Layout Analizi Animasyonu */
+
+        .layout-box {
+            position: absolute;
+            /* Ana tema rengi (kırmızı) */
+            background: rgba(220, 20, 60, 0.1);
+            border: 2px solid var(--primary-red);
+            border-radius: 4px;
+
+            /* Başlangıç durumu */
+            opacity: 0;
+            transform: scale(0.95);
+
+            /* Animasyon: 4 saniyelik döngü, farklı gecikmelerle */
+            animation: layout-pop 4s ease-in-out infinite;
+        }
+
+        /* Etiket stili */
+        .layout-label {
+            position: absolute;
+            top: -24px;
+            /* Çakışmayı önlemek için kutudan daha da uzaklaştırıldı */
+            left: 2px;
+            /* Kutunun iç tarafına biraz daha kaydırıldı */
+            background: var(--primary-red);
+            color: var(--white);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            /* 11.2px */
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 4px 4px 0 0;
+            white-space: nowrap;
+        }
+
+        /* Tespit animasyon keyframe'i */
+        @keyframes layout-pop {
+            0% {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            20% {
+                /* Hızla belir */
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            80% {
+                /* Ekranda kal */
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                /* Kaybol ve döngüye hazırlan */
+                opacity: 0;
+                transform: scale(0.95);
+            }
+        }
+
+        /* Kutu 1: Başlık Tespiti (Metni tam kapsayacak şekilde) */
+        .box-header {
+            top: 10px;
+            /* Metin çubuğunun üstü (12px padding - 2px sınır) */
+            left: 10px;
+            /* Metin çubuğunun solu (12px padding - 2px sınır) */
+            width: 80px;
+            /* Metin çubuğunun genişliği (~76px + 4px sınır payı) */
+            height: 12px;
+            /* Metin çubuğunun yüksekliği (8px + 4px sınır payı) */
+            animation-delay: 0.5s;
+        }
+
+        /* Kutu 2: Paragraf Tespiti (Metni tam kapsayacak şekilde) */
+        .box-paragraph {
+            top: 26px;
+            /* Paragraf metninin üstü (12+8+8 gap - 2px sınır) */
+            left: 10px;
+            /* Metin çubuğunun solu (12px padding - 2px sınır) */
+            width: 130px;
+            /* Tam genişlikteki metin çubuğu (126px + 4px sınır payı) */
+            height: 44px;
+            /* 3 satır + 2 boşluk (40px + 4px sınır payı) */
+
+            /* Farklı bir renk kullanalım (örn: yeşil) */
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            animation-delay: 1.5s;
+            /* İkinci bu belirsin */
+        }
+
+        /* Yeşil kutunun etiket rengini de yeşil yap */
+        .box-paragraph .layout-label {
+            background: var(--success);
+
+            /* 'top' kuralını iptal et ve 'bottom' olarak ayarla */
+            top: auto;
+            bottom: -24px;
+            /* Kutuya göre alttan 24px dışarıda */
+
+            /* Köşe yuvarlaklığını alttaki köşelere taşı */
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* Adım 3: Metin Tespiti (DetectionPredictor) Animasyonu */
+
+        /* 1. CNN Tarama Çizgisi (Scanning Line) */
+        .text-scan-line {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 4px;
+            /* İnce bir çizgi */
+            background: var(--primary-red-light);
+            /* Lazer efekti için parlama */
+            box-shadow: 0 0 15px 2px var(--primary-red);
+            border-radius: 4px;
+
+            /* Animasyon: 4 saniyelik döngü, baştan sona */
+            animation: cnn-scan 4s infinite ease-in-out;
+        }
+
+        @keyframes cnn-scan {
+            0% {
+                top: 0;
+                opacity: 0;
+            }
+
+            10% {
+                /* Hızla belir */
+                top: 0;
+                opacity: 1;
+            }
+
+            80% {
+                /* Yavaşça aşağı in */
+                top: 100%;
+                opacity: 1;
+            }
+
+            100% {
+                /* Kaybol */
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        /* 2. Piksel Düzeyinde Tespit Maskeleri */
+        .text-detect-mask {
+            position: absolute;
+            background: rgba(220, 20, 60, 0.4);
+            /* Yarı şeffaf kırmızı maske */
+            border-radius: 2px;
+
+            /* Başlangıçta gizli */
+            opacity: 0;
+
+            /* Animasyon: Tarama çizgisi ona ulaştığında belir */
+            animation: text-reveal 4s infinite ease-in-out;
+        }
+
+        @keyframes text-reveal {
+
+            /* Başlangıçta gizli */
+            0%,
+            10% {
+                opacity: 0;
+            }
+
+            /* Belir (animasyon-delay ile senkronize olacak) */
+            20%,
+            80% {
+                opacity: 1;
+            }
+
+            /* Döngü bitiminde gizlen */
+            90%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* Maskeleri, .doc-visual içindeki metin çubuklarıyla
+           tam olarak aynı konuma yerleştiriyoruz */
+
+        .mask-1 {
+            top: 12px;
+            left: 12px;
+            width: 76px;
+            /* 60% */
+            height: 8px;
+            animation-delay: 0.2s;
+            /* Tarama çizgisi buraya ulaştığında */
+        }
+
+        .mask-2 {
+            top: 28px;
+            /* 12 + 8 + 8 */
+            left: 12px;
+            width: 126px;
+            /* 100% */
+            height: 8px;
+            animation-delay: 0.7s;
+        }
+
+        .mask-3 {
+            top: 44px;
+            /* 28 + 8 + 8 */
+            left: 12px;
+            width: 126px;
+            /* 100% */
+            height: 8px;
+            animation-delay: 1.2s;
+        }
+
+        .mask-4 {
+            top: 60px;
+            /* 44 + 8 + 8 */
+            left: 12px;
+            width: 101px;
+            /* 80% */
+            height: 8px;
+            animation-delay: 1.7s;
+        }
+
+        /* Adım 4: Karakter Tanıma (RecognitionPredictor) Animasyonu */
+
+        /* Adım 2'den gelen 'layout-pop' animasyonunu eziyoruz.
+           Kutular bu adımda sabit kalmalı. */
+        #step-4-header,
+        #step-4-para {
+            animation: none;
+            /* 'layout-pop' animasyonunu durdur */
+            opacity: 1;
+            /* Kutuları görünür yap */
+            transform: scale(1);
+
+            /* Yeni 'recognition-fill' animasyonunun
+               kutu dışına taşmamasını sağla */
+            overflow: hidden;
+        }
+
+        /* 'layout-box' içindeki 'layout-label'ı alta alma kuralını sıfırla.
+           (Paragraf etiketinin bu adımda da altta kalması için) */
+        #step-4-para .layout-label {
+            top: auto;
+            bottom: -24px;
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* 1. Tanıma İlerlemesi (Fill) Efekti */
+        .recognition-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            /* Animasyon buradan başlar (0 genişlik) */
+
+            /* Kutu rengine (kırmızı/yeşil) göre hafifçe daha açık
+               veya beyaz, yarı şeffaf bir dolgu rengi */
+            background: rgba(255, 255, 255, 0.25);
+
+            /* Animasyon: 4 saniyelik döngü */
+            animation: recognition-progress 4s infinite ease-in-out;
+        }
+
+        /* 'Okuma' (soldan sağa dolma) animasyonu */
+        @keyframes recognition-progress {
+            0% {
+                width: 0;
+                opacity: 1;
+            }
+
+            /* 0%'dan 40%'a kadar: Kutu 100% genişliğe ulaşır (Okuma) */
+            40% {
+                width: 100%;
+                opacity: 1;
+            }
+
+            /* 40%'dan 60%'a kadar: Tamamlandı (Bekle) */
+            60% {
+                width: 100%;
+                opacity: 1;
+            }
+
+            /* 60%'dan 80%'e kadar: Kaybol (Reset) */
+            80% {
+                width: 100%;
+                opacity: 0;
+            }
+
+            /* 80%'den 100%'e kadar: Sıfırda bekle */
+            100% {
+                width: 0;
+                opacity: 0;
+            }
+        }
+
+        /* 2. Paragraf kutusunun dolgusu, BAŞLIK bittikten sonra başlasın */
+        #step-4-para .recognition-fill {
+            animation-delay: 1.5s;
+        }
+
+        /* Adım 5: Çıktı Üretimi (XML/MD) Animasyonu */
+
+        /* Genel çıktı ikonu stili */
+        .output-icon {
+            position: absolute;
+            font-size: 1.5rem;
+            /* ~36px */
+
+            /* Başlangıç: Merkezin tam ortasında, görünmez ve küçük */
+            top: 50%;
+            left: 50%;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.3);
+
+            /* Animasyon: 4 saniyelik döngü */
+            animation: fly-out 4s infinite ease-out;
+        }
+
+        /* İkonların "dışarı fırlama" animasyonu */
+        @keyframes fly-out {
+            0% {
+                /* Başlangıç (Merkezde) */
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.3);
+            }
+
+            30% {
+                /* Hedefe varış (Belirginleş) */
+                opacity: 1;
+                /* --transform-end değişkeni ile hedefe git */
+                transform: var(--transform-end) scale(1);
+            }
+
+            80% {
+                /* Hedefte bekle */
+                opacity: 1;
+                transform: var(--transform-end) scale(1);
+            }
+
+            100% {
+                /* Sona gelince hızla kaybol (döngü için) */
+                opacity: 0;
+                transform: var(--transform-end) scale(0.3);
+            }
+        }
+
+        /* 1. XML İkonu (Sol-Üst) */
+        .icon-xml {
+            color: var(--primary-red);
+            /* Ana tema rengi */
+            /* Kutu içinde sol-üst */
+            --transform-end: translate(-100%, -100%);
+            animation-delay: 0.5s;
+        }
+
+        /* 2. Markdown İkonu (Alt-Orta - TAŞMA DÜZELTİLDİ) */
+        .icon-md {
+            color: var(--gray-400);
+            /* Nötr gri */
+            /* Kutu içinde alt-orta (taşırmayı önle) */
+            --transform-end: translate(-50%, 50%);
+            animation-delay: 1.5s;
+        }
+    </style>
+</head>
+
+<body class="font-body antialiased selection:bg-primary/20 selection:text-primary-dark">
+
+    <!-- Neural Background -->
+    <canvas id="neural-canvas"></canvas>
+
+    <!-- Navigation - matching landing.html -->
+    <nav class="navbar sticky top-0 z-[1000] glass-nav transition-all duration-300 shadow-sm" id="navbar">
+        <div class="max-w-[1400px] mx-auto px-6 py-4 flex justify-between items-center w-full">
+            <!-- Logo Section -->
+            <a href="/"
+                class="group flex items-center gap-3 text-2xl font-black text-primary font-display no-underline transition-all duration-300 hover:scale-105">
+                <img src="/static/logo.png" alt="OSPA Logo" class="h-8 w-auto object-contain">
+            </a>
+
+            <!-- Central Navigation Menu -->
+            <nav class="hidden lg:flex items-center gap-1">
+                <a href="/"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all relative group">
+                    Ana Sayfa
+                    <span
+                        class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </a>
+
+                <div class="relative group">
+                    <a href="/ocr"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-primary bg-primary/5 hover:bg-primary/10 transition-all flex items-center gap-1">
+                        SuryaOCR
+                        <span class="absolute bottom-1 left-0 w-full h-0.5 bg-primary rounded-full"></span>
+                    </a>
+                </div>
+
+                <div class="relative group">
+                    <a href="/preprocessing"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all flex items-center gap-1">
+                        Ön İşleme Aracı
+                        <span
+                            class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+
+                <div class="relative group">
+                    <a href="https://dbb.iyte.edu.tr/ospa.html" target="_blank"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all flex items-center gap-1">
+                        Hakkımızda
+                        <span
+                            class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+
+                <a href="https://ospa.iyte.edu.tr/#contact" target="_blank"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all relative group">
+                    İletişim
+                    <span
+                        class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </a>
+            </nav>
+
+            <!-- Stats / Right Section -->
+            <div class="flex items-center gap-6 font-mono text-[0.65rem] text-gray-500">
+                <div class="hidden xl:block w-px h-4 bg-gray-300"></div>
+                <div class="flex items-center gap-2 font-semibold text-gray-600">
+                    <i class="fas fa-microchip"></i>
+                    <span>GPU Destekli</span>
+                </div>
+                <div class="hidden xl:block w-px h-4 bg-gray-300"></div>
+                <div class="flex items-center gap-2 font-semibold text-gray-600">
+                    <span
+                        class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
+                    <span class="uppercase tracking-widest">OSPA Hızlandırıcı</span>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-gray-900 text-2xl" id="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu"
+        class="fixed inset-0 bg-white z-[100] transform translate-x-full transition-transform duration-300 md:hidden flex flex-col p-8">
+        <div class="flex justify-between items-center mb-8">
+            <span class="font-display font-bold text-2xl text-gray-900">Menü</span>
+            <button id="close-menu-btn" class="text-2xl text-gray-500 hover:text-primary">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="flex flex-col gap-6 text-lg font-medium">
+            <a href="/" class="text-text-secondary">Ana Sayfa</a>
+            <a href="/ocr" class="text-primary font-bold">SuryaOCR Pro</a>
+            <a href="/preprocessing" class="text-text-secondary">Ön İşleme Aracı</a>
+            <a href="https://ospa.iyte.edu.tr/" class="text-text-secondary">Hakkımızda</a>
+            <a href="https://ospa.iyte.edu.tr/#contact" class="text-text-secondary">İletişim</a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-book"></i>
+                    <span>Akademik Standartlarda OCR Çözümü</span>
+                </div>
+                <h1 class="hero-title">
+                    Tarihsel Belgeler İçin
+                    <span class="highlight">Geliştirilmiş OCR Sistemi</span>
+                </h1>
+                <p class="hero-subtitle">
+                    OSPA - SuryaOCR Pro, transformer tabanlı modern derin öğrenme mimarisi ve entegre layout analizi ile
+                    tarihsel belgelerde %80-88 doğruluk oranı sağlayan, akademik araştırmalar için özel olarak optimize
+                    edilmiş bir OCR çözümüdür.
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <div class="stat-number">%88</div>
+                        <div class="stat-label">Doğruluk Oranı</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">90+</div>
+                        <div class="stat-label">Dil Desteği</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">10</div>
+                        <div class="stat-label">Sayfa Başı İşlem Süresi</div>
+                    </div>
+                </div>
+                <div class="hero-buttons">
+                    <a href="/preprocessing" class="btn btn-primary">
+                        <i class="fas fa-bolt"></i> Hemen Dene
+                    </a>
+                    <a href="https://github.com/datalab-to/surya" target="_blank" class="btn btn-secondary">
+                        <i class="fab fa-github"></i> Kaynak Kod
+                    </a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="ocr-demo">
+                    <div class="demo-header">
+                        <span class="demo-title">OCR İşlemi Canlı Demo</span>
+                        <div class="demo-status">
+                            <span class="dot"></span>
+                            <span>İşleniyor</span>
+                        </div>
+                    </div>
+                    <div class="demo-content">
+                        <div class="demo-box input">
+                            <div class="demo-box-title">Girdi: Sararmış Bir Belge</div>
+
+                            <div class="document-page scanning">
+                                <div class="scan-bar"></div>
+
+                                <div class="document-page-inner">
+                                    <img src="/static/comparison/comparison_after.png" alt="İşlenmemiş Belge Demosu"
+                                        style="width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 4px; position: relative; z-index: 1;">
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="demo-box output shimmer-effect">
+
+                            <div class="demo-box-header">
+                                <div class="demo-box-title">Çıktı: OCR Sonucu</div>
+                                <div class="demo-tab-nav">
+                                    <button class="demo-tab-link active" data-target="md-content">
+                                        <i class="fab fa-markdown"></i> MD
+                                    </button>
+                                    <button class="demo-tab-link" data-target="xml-content">
+                                        <i class="fas fa-code"></i> XML
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="demo-tab-content-wrapper">
+
+                                <div class="demo-tab-content active" id="md-content">
+                                    <div class="demo-text">
+                                        ## Sayfa 117 <br>
+                                        **Paragraf 1** <br>
+                                        ### Lordlar Kamarası<br>
+                                        **Paragraf 2** <br>
+                                        4 Temmuz 1881<br>
+                                        **Paragraf 3** <br>
+                                        Earl de la-Warr : - Hariciye Nazırından, İstanbulda ceryan eden Mithat Paşanın
+                                        muhakemesine dair.. <br>
+                                        *Paragraf 4** <br>
+                                        Lord Granville: - Devletemaab, Umum Avrupanın.. <br>
+                                        **Paragraf 5** <br>
+                                        ### Avam Kamarası <br>
+                                        **Paragraf 6** <br>
+                                        7. Temmuz 1881. <br>
+                                        **Paragraf 7** <br>
+                                        Mister Staveley Hill: - Mithat Paşanın mahkemesine dair.. <br>
+                                        **Paragraf 8** <br>
+                                        Sir Charles Dilke: - Bu mes'ele hakkında.. bulunduğu şüphesizdir.<br>
+                                    </div>
+                                </div>
+
+                                <div class="demo-tab-content" id="xml-content">
+                                    <div class="demo-text">
+                                        &lt;sayfa number="117" paragraph_count="8"&gt;<br>
+                                        &nbsp;&nbsp;&lt;paragraf number="1" type="heading"&gt;Lordlar
+                                        Kamarası&lt;/paragraf&gt;<br>
+                                        &nbsp;&nbsp;&lt;paragraf number="2" type="paragraph"&gt;4 Temmuz
+                                        1881.&lt;/paragraf&gt;<br>
+                                        &nbsp;&nbsp;&lt;paragraf number="3" type="paragraph"&gt;Earl de la-Warr : -
+                                        Hariciye Nazırından, İstanbulda ceryan eden Mithat Paşanın muhakemesine dair ..
+                                        &lt;/paragraf&gt;<br>
+                                        &nbsp;&nbsp;&lt;paragraf number="4" type="paragraph"&gt;Lord Granville: -
+                                        Devletemaab, Umum Avrupanın .. &lt;/paragraf&gt;<br>
+                                        &nbsp;&nbsp;&lt;paragraf number="5" type="heading"&gt;Avam
+                                        Kamarası&lt;/paragraf&gt;<br>
+                                        &nbsp;&nbsp;&lt;paragraf number="6" type="footnote"&gt;7. Temmuz
+                                        1881.&lt;/paragraf&gt;<br>
+                                        &nbsp;&nbsp;&lt;paragraf number="7" type="paragraph"&gt;Mister Staveley Hill: -
+                                        Mithat Paşanın mahkemesine dair .. &lt;/paragraf&gt;<br>
+                                        &nbsp;&nbsp;&lt;paragraf number="8" type="paragraph"&gt;Sir Charles Dilke: - Bu
+                                        mes'ele hakkında bulunduğu şüphesizdir.&lt;/paragraf&gt;<br>
+                                        &lt;/sayfa&gt;
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-header">
+            <span class="section-badge">
+                <i class="fas fa-star"></i> Üstün Özellikler
+            </span>
+            <h2 class="section-title">Neden OSPA - SuryaOCR Pro?</h2>
+            <p class="section-subtitle">
+                Tesseract, EasyOCR ve diğer alternatiflerle yapılan kapsamlı testlerde,
+                SuryaOCR tarihsel belgelerde 2-3 kat daha yüksek doğruluk oranı sağlamıştır.
+            </p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="feature-title">Transformer Tabanlı Mimari</h3>
+                <p class="feature-description">
+                    Modern derin öğrenme teknolojisi ile bağlamsal karakter tanıma ve yüksek doğruluk.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> DetectionPredictor ile piksel düzeyinde tespit</li>
+                    <li><i class="fas fa-check"></i> RecognitionPredictor ile karakter tanıma</li>
+                    <li><i class="fas fa-check"></i> Entegre çalışan üç modül sistemi</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h3 class="feature-title">Layout Analizi</h3>
+                <p class="feature-description">
+                    Belge yapısını anlayan ve koruyan gelişmiş layout tespiti ile karmaşık düzenlerde başarı.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Başlık, paragraf, dipnot ayrımı</li>
+                    <li><i class="fas fa-check"></i> Çok sütunlu belge desteği</li>
+                    <li><i class="fas fa-check"></i> Okuma sırası korunumu</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-file-code"></i>
+                </div>
+                <h3 class="feature-title">XML ve MD çıktı formatı</h3>
+                <p class="feature-description">
+                    NLP uygulamaları için gerekli olan XML ve MD formatı desteği.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Metadata bilgileri</li>
+                    <li><i class="fas fa-check"></i> Kornmuş sayfa düzeni</li>
+                    <li><i class="fas fa-check"></i> Layout tipi göstergesi</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <h3 class="feature-title">Yüksek Performans</h3>
+                <p class="feature-description">
+                    GPU hızlandırma ve optimize edilmiş işlem süresi ile hızlı dijitalleştirme.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> 5-10 saniye/sayfa işlem süresi</li>
+                    <li><i class="fas fa-check"></i> 3-5 GB GPU bellek kullanımı</li>
+                    <li><i class="fas fa-check"></i> Toplu işleme desteği</li>
+                    <li><i class="fas fa-check"></i> Düşük donanımlarda dahi performanslı!</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3 class="feature-title">Metadata Yönetimi</h3>
+                <p class="feature-description">
+                    Akademik standartlarda bibliyografik bilgi yönetimi ve çoklu çıktı formatları.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> XML ve Markdown çıktı formatları</li>
+                    <li><i class="fas fa-check"></i> APA ve Chicago atıf stilleri</li>
+                    <li><i class="fas fa-check"></i> Güven skorları ile doğruluk bilgisi</li>
+                    <li><i class="fas fa-check"></i> Kolay anlaşılabilirlik</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-newspaper"></i>
+                </div>
+                <h3 class="feature-title">Gazete Özel Modu</h3>
+                <p class="feature-description">
+                    DocLayout-YOLO entegrasyonu ile çok sütunlu gazete sayfalarında üstün başarı.
+                </p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check"></i> Gazetelere özel düzen analizi</li>
+                    <li><i class="fas fa-check"></i> Sütun sınırları tespiti</li>
+                    <li><i class="fas fa-check"></i> Haber bloklarının ayrıştırılması</li>
+                    <li><i class="fas fa-check"></i> Görsel alanlarının tanınması</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="comparison" id="comparison">
+        <div class="section-header">
+            <span class="section-badge">
+                <i class="fas fa-chart-bar"></i> Performans Karşılaştırması
+            </span>
+            <h2 class="section-title">Rakipsiz Başarı Oranları</h2>
+            <p class="section-subtitle">
+                Kapsamlı testlerde SuryaOCR, diğer tüm OCR çözümlerine karşı üstün performans göstermiştir.
+            </p>
+        </div>
+        <div class="comparison-table-wrapper">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>OCR Sistemi</th>
+                        <th>Modern Belgeler</th>
+                        <th>Tarihsel Belgeler</th>
+                        <th>İşlem Süresi</th>
+                        <th>GPU Kullanımı</th>
+                        <th>Maliyet</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight-row">
+                        <td>OSPA - SuryaOCR Pro</td>
+                        <td><span class="badge-success">%90-95</span></td>
+                        <td><span class="badge-success">%80-88</span></td>
+                        <td><span class="badge-success">5-10s</span></td>
+                        <td><span class="badge-success">3-5 GB</span></td>
+                        <td><span class="badge-success">Ücretsiz</span></td>
+                    </tr>
+                    <tr>
+                        <td>Tesseract + Hibrit</td>
+                        <td><span class="badge-warning">%85-90</span></td>
+                        <td><span class="badge-error">%25-45</span></td>
+                        <td><span class="badge-warning">40-60s</span></td>
+                        <td><span class="badge-success">Düşük</span></td>
+                        <td><span class="badge-success">Ücretsiz</span></td>
+                    </tr>
+                    <tr>
+                        <td>EasyOCR</td>
+                        <td><span class="badge-warning">%78-85</span></td>
+                        <td><span class="badge-error">%5-25</span></td>
+                        <td><span class="badge-warning">15-25s</span></td>
+                        <td><span class="badge-warning">6-8 GB</span></td>
+                        <td><span class="badge-success">Ücretsiz</span></td>
+                    </tr>
+                    <tr>
+                        <td>Nanonets API</td>
+                        <td><span class="badge-success">%90+</span></td>
+                        <td><span class="badge-success">%85-90</span></td>
+                        <td><span class="badge-success">8-12s</span></td>
+                        <td>-</td>
+                        <td><span class="badge-error">Ücretli</span></td>
+                    </tr>
+                    <tr>
+                        <td>Ollama/Nanonets</td>
+                        <td><span class="badge-success">%70</span></td>
+                        <td><span class="badge-warning">%55-60</span></td>
+                        <td><span class="badge-error">45-60s</span></td>
+                        <td><span class="badge-error">%90+</span></td>
+                        <td><span class="badge-success">Ücretsiz</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Process Section -->
+    <section class="process" id="process">
+        <div class="section-header">
+            <span class="section-badge">
+                <i class="fas fa-cogs"></i> İşlem Süreci
+            </span>
+            <h2 class="section-title">Nasıl Çalışır?</h2>
+            <p class="section-subtitle">
+                OSPA - SuryaOCR Pro'nun entegre üç modüllü sistemi, belgeleri adım adım işleyerek yüksek doğruluk
+                sağlar.
+            </p>
+        </div>
+        <div class="process-timeline">
+            <div class="timeline-line"></div>
+
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <span class="timeline-number">1</span>
+                    <h3 class="timeline-title">Ön İşleme (PyReform)</h3>
+                    <p class="timeline-description">
+                        Geliştirdiğimiz Ön işleme aracı, uvdoc modeli ile tam doküman düzeltme sağlar. Bilateral
+                        filtreleme ile yüzey gürültüsü %30-40 azaltılır,
+                        CLAHE algoritması ile yerel kontrast optimizasyonu yapılır. DPI, kontrast ve parlaklık ayarları
+                        optimize edilir. <br>
+                        <b>Bu adım zorunlu değildir. Ancak belgede bozukluk görünüyorsa uygulanması önerilir.</b>
+                    </p>
+                </div>
+                <div class="timeline-visual">
+                    <div class="ocr-step-stage">
+                        <div class="doc-visual ocr-step-1-anim">
+                            <div class="doc-line-title"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line-short"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-dot"></div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <span class="timeline-number">2</span>
+                    <h3 class="timeline-title">Layout Analizi</h3>
+                    <p class="timeline-description">
+                        LayoutPredictor modülü belgedeki her metin bloğunu başlık, paragraf, dipnot, tablo olarak
+                        kategorize eder.
+                        Çok sütunlu belgelerde okuma sırası belirlenir, bloklar arası ilişkiler tespit edilir.
+                    </p>
+                </div>
+                <div class="timeline-visual">
+                    <div class="ocr-step-stage">
+                        <div class="doc-visual">
+                            <div class="doc-line-title"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line-short"></div>
+                        </div>
+
+                        <div class="layout-box box-header">
+                            <span class="layout-label">BAŞLIK</span>
+                        </div>
+                        <div class="layout-box box-paragraph">
+                            <span class="layout-label">PARAGRAF</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-dot"></div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <span class="timeline-number">3</span>
+                    <h3 class="timeline-title">Metin Tespiti</h3>
+                    <p class="timeline-description">
+                        DetectionPredictor metin bölgelerini piksel düzeyinde tespit eder. Convolutional neural network
+                        modeli
+                        ile her metin bloğunun koordinatları belirlenir, güven skorları hesaplanır.
+                    </p>
+                </div>
+                <div class="timeline-visual">
+                    <div class="ocr-step-stage">
+                        <div class="doc-visual">
+                            <div class="doc-line-title"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line-short"></div>
+                        </div>
+
+                        <div class="text-detect-mask mask-1"></div>
+                        <div class="text-detect-mask mask-2"></div>
+                        <div class="text-detect-mask mask-3"></div>
+                        <div class="text-detect-mask mask-4"></div>
+
+                        <div class="text-scan-line"></div>
+                    </div>
+                </div>
+                <div class="timeline-dot"></div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <span class="timeline-number">4</span>
+                    <h3 class="timeline-title">Karakter Tanıma</h3>
+                    <p class="timeline-description">
+                        RecognitionPredictor layout analizi sonuçlarını kullanarak karakter tanıma işlemini
+                        gerçekleştirir.
+                        Transformer tabanlı mimari ile bağlamsal analiz yapılır, %88+ doğruluk elde edilir.
+                    </p>
+                </div>
+                <div class="timeline-visual">
+                    <div class="ocr-step-stage">
+                        <div class="doc-visual">
+                            <div class="doc-line-title"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line-short"></div>
+                        </div>
+
+                        <div class="layout-box box-header" id="step-4-header">
+                            <span class="layout-label">BAŞLIK</span>
+                            <div class="recognition-fill"></div>
+                        </div>
+                        <div class="layout-box box-paragraph" id="step-4-para">
+                            <span class="layout-label">PARAGRAF</span>
+                            <div class="recognition-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-dot"></div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-content">
+                    <span class="timeline-number">5</span>
+                    <h3 class="timeline-title">Çıktı Üretimi</h3>
+                    <p class="timeline-description">
+                        XML ve Markdown formatlarında yapılandırılmış çıktı üretilir. Metadata bilgileri, güven skorları
+                        ve
+                        akademik atıf formatları otomatik olarak oluşturulur.
+                    </p>
+                </div>
+                <div class="timeline-visual">
+                    <div class="ocr-step-stage">
+                        <div class="doc-visual">
+                            <div class="doc-line-title"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line"></div>
+                            <div class="doc-line-short"></div>
+                        </div>
+
+                        <div class="output-icon icon-xml">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <div class="output-icon icon-md">
+                            <i class="fab fa-markdown"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="timeline-dot"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Stack -->
+    <section class="tech-stack" id="tech">
+        <div class="section-header">
+            <span class="section-badge">
+                <i class="fas fa-code"></i> Teknoloji Altyapısı
+            </span>
+            <h2 class="section-title">Güçlü Teknoloji Stack'i</h2>
+            <p class="section-subtitle">
+                Modern web teknolojileri ve derin öğrenme kütüphaneleri ile geliştirilmiş güvenilir altyapı.
+            </p>
+        </div>
+        <div class="tech-grid">
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fab fa-python"></i>
+                </div>
+                <div class="tech-name">Python</div>
+                <div class="tech-version">3.9+</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="tech-name">PyTorch</div>
+                <div class="tech-version">2.0+</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fab fa-react"></i>
+                </div>
+                <div class="tech-name">React</div>
+                <div class="tech-version">18.0</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <div class="tech-name">Flask</div>
+                <div class="tech-version">2.3</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-microchip"></i>
+                </div>
+                <div class="tech-name">CUDA</div>
+                <div class="tech-version">12.0</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="tech-name">PostgreSQL</div>
+                <div class="tech-version">3.40</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fab fa-github"></i>
+                </div>
+                <div class="tech-name">Datalab SuryaOCR</div>
+                <div class="tech-version">GitHub</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fab fa-github"></i>
+                </div>
+                <div class="tech-name">DocLayout YOLO</div>
+                <div class="tech-version">GitHub</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="tech-name">PyMuPDF</div>
+                <div class="tech-version">1.23</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="tech-name">Pillow</div>
+                <div class="tech-version">10.0</div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results" id="results">
+        <div class="section-header">
+            <span class="section-badge">
+                <i class="fas fa-trophy"></i> Elde edilen başarılar
+            </span>
+            <h2 class="section-title">Kanıtlanmış Sonuçlar</h2>
+            <p class="section-subtitle">
+                Tarihsel belgelerin dijitalleştirilmesinde akademik standartlara ulaşan ilk açık kaynak çözüm.
+            </p>
+        </div>
+        <div class="results-showcase">
+            <div class="result-card">
+                <div class="result-percentage">%88</div>
+                <h3 class="result-title">Tarihsel Belge Doğruluğu</h3>
+                <p class="result-description">
+                    1930-1950 dönemi Osmanlıca-Modern Türkçe geçiş sürecindeki belgelerde elde edilen başarı oranı.
+                </p>
+                <div class="result-comparison">
+                    <div class="comparison-item">
+                        <div class="comparison-label">Tesseract</div>
+                        <div class="comparison-value">%25-45</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-label">EasyOCR</div>
+                        <div class="comparison-value">%5-25</div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-card">
+                <div class="result-percentage">3X</div>
+                <h3 class="result-title">Hız Artışı</h3>
+                <p class="result-description">
+                    Ollama/Nanonets sistemine kıyasla 3 kat daha hızlı işlem süresi ile verimli dijitalleştirme.
+                </p>
+                <div class="result-comparison">
+                    <div class="comparison-item">
+                        <div class="comparison-label">SuryaOCR</div>
+                        <div class="comparison-value">5-10s</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-label">Diğerleri</div>
+                        <div class="comparison-value">45-60s</div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-card">
+                <div class="result-percentage">40.000+</div>
+                <h3 class="result-title">Test Edilen Sayfa</h3>
+                <p class="result-description">
+                    Kapsamlı test sürecinde işlenen tarihsel belge sayfası sayısı ve doğrulama metrikleri.
+                </p>
+                <div class="result-comparison">
+                    <div class="comparison-item">
+                        <div class="comparison-label">Başarılı</div>
+                        <div class="comparison-value">%92</div>
+                    </div>
+                    <div class="comparison-item">
+                        <div class="comparison-label">Layout Korunumu</div>
+                        <div class="comparison-value">%90</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="cta-content">
+            <h2 class="cta-title">
+                Tarihsel Belgelerinizi Dijitalleştirmeye<br>
+                Hazır mısınız?
+            </h2>
+            <p class="cta-subtitle">
+                OSPA - SuryaOCR Pro ile akademik araştırmalarınız için güvenilir, hızlı ve yüksek doğrulukta
+                OCR çözümünü deneyin.
+            </p>
+            <div class="cta-buttons">
+                <a href="/ocr" class="btn btn-primary">
+                    <i class="fas fa-eye"></i> Hemen Dene!
+                </a>
+            </div>
+            <div class="cta-buttons">
+                <a href="https://huggingface.co/dbbiyte" target="_blank" class="btn btn-hf">
+                    <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg" alt="Hugging Face"
+                        width="20" height="20" style="vertical-align: middle; margin-right: 8px;">
+                    DBB İYTE HuggingFace
+                </a>
+
+                <a href="https://github.com/datalab-to/surya" target="_blank" class="btn btn-github">
+                    <i class="fab fa-github"></i> SuryaOCR GitHub
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer - matching landing.html -->
+    <footer class="border-t border-gray-100 bg-white py-16 mt-auto w-full relative z-10">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+
+                <!-- Brand Section -->
+                <div class="flex flex-col gap-6">
+                    <a href="/" class="flex items-center group w-fit">
+                        <div class="relative">
+                            <img src="/static/logo.png" alt="OSPA Logo"
+                                class="h-14 w-auto object-contain relative z-10 filter drop-shadow-sm group-hover:drop-shadow-md transition-all duration-300">
+                            <div
+                                class="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-500 -z-0 opacity-0 group-hover:opacity-40">
+                            </div>
+                        </div>
+                    </a>
+                    <p class="text-sm text-gray-500 font-medium leading-relaxed max-w-xs">
+                        1800-1950 dönemi için yapılandırılmış Prosopografik Dijital Biyografi Arşivi.
+                    </p>
+                </div>
+
+                <!-- Biz Kimiz? Section -->
+                <div class="flex flex-col gap-6">
+                    <h4 class="text-sm font-bold text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-2">
+                        Biz Kimiz?</h4>
+                    <ul class="flex flex-col gap-4">
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-globe w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Projemiz</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/#team" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-users w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Ekibimiz</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/#works" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-puzzle-piece w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Çalışmalarımız</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/#team-section" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-envelope w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">İletişim</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Dış Bağlantılar Section -->
+                <div class="flex flex-col gap-6">
+                    <h4 class="text-sm font-bold text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-2">
+                        Dış Bağlantılar</h4>
+                    <ul class="flex flex-col gap-4">
+                        <li>
+                            <a href="https://iyte.edu.tr/" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors overflow-hidden">
+                                    <img src="/static/iyte-logo.png" alt="İYTE"
+                                        class="h-[22px] w-auto object-contain transition-all contrast-125">
+                                </div>
+                                <span class="font-bold">İYTE</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://huggingface.co/dbbiyte" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg"
+                                        alt="Hugging Face" class="h-5 w-auto">
+                                </div>
+                                <span class="font-bold">HuggingFace</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://github.com/iytedbb" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fab fa-github text-[18px] text-gray-400 group-hover:text-primary transition-colors"></i>
+                                </div>
+                                <span class="font-bold">GitHub</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <img src="/static/o-ospa.png" alt="OSPA"
+                                        class="h-5 w-auto grayscale group-hover:grayscale-0 transition-all">
+                                </div>
+                                <span class="font-bold">OSPA</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Bottom Section -->
+            <div
+                class="mt-16 border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-8">
+                <p class="text-[11px] font-medium text-gray-400 leading-relaxed max-w-2xl text-center md:text-left">
+                    © 323K372 NUMARALI TÜBİTAK 1001 Projesi | Osmanlı'dan Cumhuriyet'e Sosyo-Politik Ağ Analizi Yapay
+                    Zekâ Yoluyla Dönem Tanıklıklarını Yeniden Okumak (1900-1940)
+                </p>
+
+                <ul class="wrapper flex items-center gap-2 list-none p-0 m-0">
+                    <li
+                        class="icon twitter relative list-none rounded-full bg-white border border-gray-100 w-10 h-10 flex justify-center items-center shadow-sm cursor-pointer transition-all hover:bg-black hover:text-white hover:border-black">
+                        <a href="https://x.com/iytedbb" target="_blank"
+                            class="flex items-center justify-center w-full h-full text-inherit no-underline">
+                            <i class="fab fa-x-twitter text-[18px]"></i>
+                        </a>
+                    </li>
+                    <li
+                        class="icon github relative list-none rounded-full bg-white border border-gray-100 w-10 h-10 flex justify-center items-center shadow-sm cursor-pointer transition-all hover:bg-gray-800 hover:text-white hover:border-gray-800">
+                        <a href="https://github.com/Panatios" target="_blank"
+                            class="flex items-center justify-center w-full h-full text-inherit no-underline">
+                            <i class="fab fa-github text-[18px]"></i>
+                        </a>
+                    </li>
+                    <li
+                        class="icon huggingface relative list-none rounded-full bg-white border border-gray-100 w-10 h-10 flex justify-center items-center shadow-sm cursor-pointer transition-all hover:bg-yellow-400 hover:border-yellow-400">
+                        <a href="https://huggingface.co/dbbiyte" target="_blank"
+                            class="flex items-center justify-center w-full h-full text-inherit no-underline">
+                            <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg" alt=""
+                                class="w-6 h-6">
+                        </a>
+                    </li>
+                    <li
+                        class="icon iyte relative list-none rounded-full bg-white border border-gray-100 w-10 h-10 flex justify-center items-center shadow-sm cursor-pointer transition-all hover:bg-primary hover:border-primary">
+                        <a href="https://iyte.edu.tr/" target="_blank"
+                            class="flex items-center justify-center w-full h-full p-0">
+                            <img src="/static/iyte-logo.png" alt="İYTE"
+                                class="w-[28px] h-auto object-contain transition-all contrast-125">
+                        </a>
+                    </li>
+                    <li
+                        class="icon lab relative list-none rounded-full bg-white border border-gray-100 w-10 h-10 flex justify-center items-center shadow-sm cursor-pointer transition-all hover:bg-gray-100 hover:border-gray-200">
+                        <a href="https://dbb.iyte.edu.tr/" target="_blank"
+                            class="flex items-center justify-center w-full h-full p-0">
+                            <img src="/static/lab-icon.png" alt="Lab"
+                                class="w-[24px] h-auto object-contain opacity-70 hover:opacity-100 transition-opacity">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTop"
+        class="fixed bottom-8 right-8 w-12 h-12 bg-primary text-white rounded-full shadow-xl shadow-primary/30 flex items-center justify-center text-xl translate-y-20 opacity-0 transition-all duration-500 hover:scale-110 hover:-translate-y-1 z-40">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+            // --- Neural Background Logic ---
+            (function () {
+                const canvas = document.getElementById('neural-canvas');
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                let nodes = [];
+                const nodeCount = 25;
+                let animationFrameId;
+
+                function resize() {
+                    const dpr = Math.min(window.devicePixelRatio, 2);
+                    canvas.width = window.innerWidth * dpr;
+                    canvas.height = window.innerHeight * dpr;
+                    canvas.style.width = window.innerWidth + 'px';
+                    canvas.style.height = window.innerHeight + 'px';
+                    ctx.scale(dpr, dpr);
+                }
+
+                function initNodes() {
+                    nodes = Array.from({ length: nodeCount }, () => ({
+                        x: Math.random() * window.innerWidth,
+                        y: Math.random() * window.innerHeight,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        radius: 3 + Math.random() * 2,
+                        phase: Math.random() * Math.PI * 2,
+                    }));
+                }
+
+                function animate() {
+                    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                    const time = Date.now() * 0.001;
+
+                    // Draw connections
+                    ctx.strokeStyle = 'rgba(185, 54, 50, 0.08)';
+                    ctx.lineWidth = 1;
+
+                    nodes.forEach((nodeA, i) => {
+                        nodes.slice(i + 1).forEach((nodeB) => {
+                            const dx = nodeA.x - nodeB.x;
+                            const dy = nodeA.y - nodeB.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+
+                            if (distance < 180) {
+                                const alpha = (1 - distance / 180) * 0.2;
+                                ctx.strokeStyle = `rgba(185, 54, 50, ${alpha})`;
+                                ctx.beginPath();
+                                ctx.moveTo(nodeA.x, nodeA.y);
+                                ctx.lineTo(nodeB.x, nodeB.y);
+                                ctx.stroke();
+                            }
+                        });
+                    });
+
+                    // Update and draw nodes
+                    nodes.forEach((node) => {
+                        node.x += node.vx;
+                        node.y += node.vy;
+
+                        if (node.x < 0 || node.x > window.innerWidth) node.vx *= -1;
+                        if (node.y < 0 || node.y > window.innerHeight) node.vy *= -1;
+
+                        const scale = 1 + Math.sin(time * 2 + node.phase) * 0.3;
+                        const alpha = 0.4 + Math.sin(time + node.phase) * 0.2;
+
+                        ctx.fillStyle = `rgba(185, 54, 50, ${alpha})`;
+                        ctx.beginPath();
+                        ctx.arc(node.x, node.y, node.radius * scale, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Simple glow
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = 'rgba(185, 54, 50, 0.3)';
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    });
+
+                    animationFrameId = requestAnimationFrame(animate);
+                }
+
+                window.addEventListener('resize', resize);
+                resize();
+                initNodes();
+                animate();
+            })();
+
+        // --- Interaction Logic ---
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const navbar = document.getElementById('navbar');
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.remove('translate-x-full');
+            });
+        }
+
+        if (closeMenuBtn) {
+            closeMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.add('translate-x-full');
+            });
+        }
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-md');
+                scrollToTopBtn.classList.remove('translate-y-20', 'opacity-0');
+            } else {
+                navbar.classList.remove('shadow-md');
+                scrollToTopBtn.classList.add('translate-y-20', 'opacity-0');
+            }
+        });
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetElement = document.querySelector(this.getAttribute('href'));
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeInUp 1s ease forwards';
+                }
+            });
+        }, observerOptions);
+
+        // Observe feature cards and other elements
+        document.querySelectorAll('.feature-card, .result-card, .timeline-item').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Progress bars animation
+        const animateProgressBars = () => {
+            document.querySelectorAll('.progress-fill').forEach(bar => {
+                const width = bar.getAttribute('data-width');
+                if (width) {
+                    bar.style.width = width;
+                }
+            });
+        };
+
+        // Counter animation
+        const animateCounters = () => {
+            const counters = document.querySelectorAll('.stat-number');
+
+            counters.forEach(counter => {
+                const target = parseFloat(counter.innerText.replace('%', ''));
+                const increment = target / 100;
+                let current = 0;
+
+                const updateCounter = () => {
+                    current += increment;
+                    if (current < target) {
+                        counter.innerText = counter.innerText.includes('%')
+                            ? `${Math.ceil(current)}%`
+                            : Math.ceil(current);
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.innerText = counter.innerText.includes('%')
+                            ? `${target}%`
+                            : target;
+                    }
+                };
+
+                const counterObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            updateCounter();
+                            counterObserver.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.5 });
+
+                counterObserver.observe(counter);
+            });
+        };
+
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', () => {
+            animateCounters();
+            animateProgressBars();
+        });
+
+        // Scroll position reset on page load
+        document.addEventListener("DOMContentLoaded", function () {
+            if (history.scrollRestoration) {
+                history.scrollRestoration = 'manual';
+            }
+            window.onbeforeunload = function () {
+                window.scrollTo(0, 0);
+            };
+        });
+
+        // Tab switch for demo box
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabContainer = document.querySelector('.demo-box.output .demo-tab-nav');
+            if (!tabContainer) return;
+
+            const header = tabContainer.parentElement;
+            if (!header) return;
+
+            const contentWrapper = header.nextElementSibling;
+            if (!contentWrapper) return;
+
+            const tabLinks = tabContainer.querySelectorAll('.demo-tab-link');
+            const tabContents = contentWrapper.querySelectorAll('.demo-tab-content');
+
+            if (!tabLinks.length || !tabContents.length) return;
+
+            tabLinks.forEach(link => {
+                link.addEventListener('click', function () {
+                    const targetId = this.getAttribute('data-target');
+
+                    tabLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+
+                    tabContents.forEach(content => {
+                        if (content.id === targetId) {
+                            content.classList.add('active');
+                        } else {
+                            content.classList.remove('active');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,3808 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Görüntü Ön İşleme - Profesyonel Belge İyileştirme</title>
+    <link rel="icon" href="/static/o-ospa.png" type="image/png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#b93632',
+                            dark: '#8e2825',
+                            light: '#d64d48',
+                            50: '#fef2f2',
+                            20: 'rgba(185, 54, 50, 0.2)'
+                        },
+                        cream: '#fdfbf7',
+                        text: {
+                            main: '#2d3436',
+                            secondary: '#636e72',
+                        }
+                    },
+                    fontFamily: {
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                        body: ['"Inter"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    animation: {
+                        'spin-slow': 'spin 8s linear infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'slideUp': 'slideUp 0.8s ease-out both',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* OSPA/ocr_info.html Kırmızı Tema Değişkenleri */
+            --primary-red: #b93632;
+            --primary-red-dark: #8e2825;
+            --primary-red-light: #d64d48;
+            --gradient-primary: linear-gradient(135deg, #b93632 0%, #d64d48 100%);
+
+            /* Mor değişkenleri Kırmızı ile değiştiriyoruz (Tutarlılık için) */
+            --primary-purple: var(--primary-red);
+            --purple-dark: var(--primary-red-dark);
+            --purple-light: var(--primary-red-light);
+
+            /* ocr_info.html'den alınan standart Gri Tema */
+            --gray-900: #1a1a2e;
+            --gray-800: #2d3436;
+            --gray-700: #3d3d3d;
+            --gray-600: #555555;
+            --gray-500: #636e72;
+            --gray-400: #7f8c8d;
+            --gray-300: #b2bec3;
+            --gray-200: #dfe6e9;
+            --gray-100: #f0f0f0;
+            --white: #FFFFFF;
+
+            /* Durum Renkleri (Bunlar kalabilir) */
+            --success: #10B981;
+            --warning: #F59E0B;
+            --error: #EF4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfbf7;
+            color: #2d3436;
+            min-height: 100vh;
+        }
+
+        /* Glass Navigation - matching landing.html */
+        .glass-nav {
+            background: rgba(253, 251, 247, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(185, 54, 50, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--gray-800);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--purple-dark));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            /* Bu sayfanın teması olan mor rengi kullanıyoruz */
+            background: var(--primary-purple);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--gray-800);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .nav-link.active {
+            color: var(--primary-purple);
+        }
+
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        /* YENİ EKLENECEK ALAN BAŞLANGICI */
+        .nav-link-anchor {
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--gray-500);
+            position: relative;
+            /* Animasyon için pozisyon eklendi */
+            padding: 0.25rem 0;
+            /* Daha uygun dikey boşluk ayarı */
+        }
+
+        .nav-link-anchor:hover {
+            color: var(--gray-800);
+        }
+
+        /* Alt çizgi animasyonu eklendi */
+        .nav-link-anchor::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gray-600);
+            transition: width 0.3s ease;
+            /* Animasyon süresi */
+        }
+
+        .nav-link-anchor:hover::after {
+            /* ocr_info'daki kırmızı yerine bu sayfanın mor temasını kullanıyoruz */
+            background: var(--primary-purple);
+            width: 100%;
+            /* Animasyonun bitiş genişliği */
+        }
+
+        /* Dropdown Menu Styles */
+        .nav-link .nav-arrow {
+            font-size: 0.7rem;
+            /* İkon boyutunu ayarlar */
+            margin-left: 0.3rem;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item-dropdown {
+            position: relative;
+            /* Açılır menünün bu öğeye göre konumlanmasını sağlar */
+        }
+
+        .dropdown-menu {
+            display: none;
+            /* Varsayılan olarak gizli */
+            position: absolute;
+            top: 100%;
+            /* Ana öğenin hemen altında */
+            left: 50%;
+            /* Yatayda ortalamak için */
+            transform: translateX(-50%) translateY(10px);
+            /* Ortala ve küçük bir boşluk bırak */
+            min-width: max-content;
+            /* İçeriğe göre genişlik */
+            background: rgba(255, 255, 255, 0.98);
+            /* Navbar ile aynı arkaplan */
+            border: 1px solid rgba(185, 54, 50, 0.1);
+            /* Ana temaya uygun border */
+            border-radius: 12px;
+            /* Tasarımla uyumlu köşe yuvarlatma */
+            box-shadow: 0 8px 25px rgba(185, 54, 50, 0.08);
+            /* Hafif bir gölge */
+            padding: 0.5rem;
+            z-index: 1100;
+            /* Diğer öğelerin üstünde kalması için */
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.215, 0.610, 0.355, 1.000);
+            /* Yumuşak animasyon */
+        }
+
+        .dropdown-menu a {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            color: var(--gray-400);
+            text-decoration: none;
+            white-space: nowrap;
+            /* Metnin tek satırda kalmasını sağlar */
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            /* İç öğeler için köşe yuvarlatma */
+            font-size: 0.95rem;
+        }
+
+        .dropdown-menu a:hover {
+            color: var(--gray-800);
+            background: rgba(185, 54, 50, 0.08);
+            /* Vurgu rengiyle uyumlu hover efekti */
+        }
+
+        /* Hover durumunda menüyü göster */
+        .nav-item-dropdown:hover>.dropdown-menu {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+            /* Yukarı kayma efekti */
+        }
+
+        /* Hover durumunda oku döndür */
+        .nav-item-dropdown:hover>.nav-link .nav-arrow {
+            transform: rotate(180deg);
+        }
+
+        /* End Dropdown Menu Styles */
+
+        /* Hero Section */
+        /* Mor Tema için birincil gradyanı (düğmeler vb. için) tanımlayalım */
+        :root {
+            --gradient-primary-purple: linear-gradient(135deg, var(--primary-purple), var(--purple-dark));
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+            margin-top: 0;
+            /* Eski margin-top: 80px; değerini sıfırlıyoruz */
+        }
+
+        .hero-container {
+            max-width: 1400px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-content {
+            z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            /* TEMA GÜNCELLEMESİ: Mor (purple) kullanıldı */
+            background: rgba(185, 54, 50, 0.08);
+            border: 1px solid rgba(185, 54, 50, 0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        .hero-badge i {
+            color: var(--primary-purple);
+        }
+
+        .hero-badge span {
+            color: var(--primary-purple);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .hero-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 4rem;
+            /* ocr_info'dan alındı */
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero-title .highlight {
+            /* TEMA GÜNCELLEMESİ: Mor (purple) kullanıldı */
+            background: var(--gradient-primary-purple);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-400);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            animation: fadeInUp 1s ease 0.2s both;
+            max-width: none;
+            /* Eski max-width: 700px değerini sıfırlıyoruz */
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+            animation: fadeInUp 1s ease 0.4s both;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            /* TEMA GÜNCELLEMESİ: Mor (purple) kullanıldı */
+            color: var(--primary-purple);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            animation: fadeInUp 1s ease 0.6s both;
+        }
+
+        /* .btn stilleri zaten global olarak tanımlı, ancak .btn-primary'yi özelleştirelim */
+        .btn-primary {
+            /* TEMA GÜNCELLEMESİ: Mor (purple) kullanıldı */
+            background: var(--gradient-primary-purple);
+            color: var(--white);
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
+        }
+
+
+        /* Hero Visual (Demo Kutusu) */
+        .hero-visual {
+            position: relative;
+            animation: fadeInRight 1s ease;
+        }
+
+        .ocr-demo {
+            /* Sınıf adını koruyoruz, ancak bu artık "işleme demosu" */
+            position: relative;
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        .ocr-demo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            /* TEMA GÜNCELLEMESİ: Mor (purple) kullanıldı */
+            background: radial-gradient(circle, rgba(185, 54, 50, 0.06) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .demo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .demo-title {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .demo-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 50px;
+            color: var(--success);
+            /* Temanızdaki --success değişkeni kullanıldı */
+            font-size: 0.875rem;
+        }
+
+        .demo-status .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .demo-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .demo-box {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            /* Demo metni için font ailesi (ocr_info.html'den alındı) */
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .demo-box-title {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+
+        .demo-text {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--gray-400);
+        }
+
+        .demo-box.output .demo-text {
+            color: var(--gray-300);
+        }
+
+        /* Gerekli Animasyon Keyframe'leri (ocr_info.html'den alındı) */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Before/After Comparison Section */
+        .comparison-section {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .comparison-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--gray-800);
+        }
+
+        .comparison-container {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .comparison-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .comparison-item {
+            position: relative;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-item:hover {
+            border-color: rgba(185, 54, 50, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .comparison-label {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--white);
+            z-index: 10;
+        }
+
+        .comparison-label.before {
+            background: rgba(239, 68, 68, 0.8);
+            left: auto;
+            /* 'left' özelliğini sıfırla */
+            right: 1rem;
+            /* Etiketi sağ kenara 1rem mesafeye yerleştir */
+        }
+
+        .comparison-label.after {
+            background: rgba(16, 185, 129, 0.8);
+        }
+
+        .comparison-image-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .comparison-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .comparison-upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-upload-placeholder:hover {
+            background: rgba(185, 54, 50, 0.03);
+        }
+
+        .comparison-upload-icon {
+            font-size: 3rem;
+            color: var(--primary-purple);
+            margin-bottom: 1rem;
+        }
+
+        .comparison-upload-text {
+            color: var(--gray-400);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .comparison-upload-hint {
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        /* === YENİ KAYDIRGAÇ ANİMASYONU (Sola-Sağa) === */
+        @keyframes wiggle-horizontal {
+
+            0%,
+            100% {
+                /* Orijinal transform değerlerine (merkezleme) ek olarak translateX(0) ekliyoruz */
+                transform: translate(-50%, -50%) translateX(0);
+            }
+
+            25% {
+                transform: translate(-50%, -50%) translateX(-6px);
+                /* 6px Sola kay */
+            }
+
+            75% {
+                transform: translate(-50%, -50%) translateX(6px);
+                /* 6px Sağa kay */
+            }
+
+            50% {
+                /* Merkeze dön */
+                transform: translate(-50%, -50%) translateX(0);
+            }
+        }
+
+        /* Processing Demo Section */
+        .demo-section {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .demo-container {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            padding: 3rem;
+        }
+
+        /* === YENİ EKLENEN STİLLER (Zaman Çizelgesi) === */
+
+        /* ocr_info.html'den alınan Section Header stilleri */
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            /* TEMA GÜNCELLEMESİ: Kırmızı (red) yerine Mor (purple) kullanıldı */
+            background: var(--primary-purple);
+            border: 1px solid rgba(185, 54, 50, 0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            margin-bottom: 1rem;
+            color: var(--white);
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--gray-400);
+            line-height: 1.6;
+        }
+
+        /* ocr_info.html'den alınan Zaman Çizelgesi (Timeline) stilleri */
+        .process-timeline {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            /* TEMA GÜNCELLEMESİ: Kırmızı (red) yerine Mor (purple) kullanıldı */
+            background: linear-gradient(180deg, transparent 0%, rgba(185, 54, 50, 0.15) 50%, transparent 100%);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 4rem;
+            align-items: center;
+            position: relative;
+        }
+
+        .timeline-item:nth-child(even) {
+            direction: rtl;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content {
+            direction: ltr;
+            text-align: left;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            /* TEMA GÜNCELLEMESİ: Kırmızı (red) yerine Mor (purple) kullanıldı */
+            background: var(--primary-purple);
+            border: 4px solid #fdfbf7;
+            /* Arka plan rengine göre ayarlandı */
+            border-radius: 50%;
+            z-index: 2;
+            /* TEMA GÜNCELLEMESİ: Kırmızı (red) yerine Mor (purple) kullanıldı */
+            box-shadow: 0 0 0 8px rgba(185, 54, 50, 0.08);
+        }
+
+        .timeline-content {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-content:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .timeline-number {
+            display: inline-flex;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            /* TEMA GÜNCELLEMESİ: Kırmızı (red) yerine Mor (purple) kullanıldı */
+            background: rgba(185, 54, 50, 0.08);
+            border: 1px solid rgba(185, 54, 50, 0.15);
+            border-radius: 10px;
+            color: var(--primary-purple);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.75rem;
+        }
+
+        .timeline-description {
+            color: var(--gray-400);
+            line-height: 1.6;
+        }
+
+        .timeline-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Example Gallery */
+        .example-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .example-card {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(185, 54, 50, 0.1);
+        }
+
+        .example-image-wrapper {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .example-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .example-card:hover .example-image {
+            transform: scale(1.1);
+        }
+
+        .example-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.6) 100%);
+            display: flex;
+            align-items: flex-end;
+            padding: 1rem;
+        }
+
+        .example-type {
+            background: rgba(185, 54, 50, 0.8);
+            color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .example-content {
+            padding: 1.5rem;
+        }
+
+        .example-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.5rem;
+        }
+
+        .example-description {
+            color: var(--gray-400);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(185, 54, 50, 0.08);
+            border-radius: 15px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(185, 54, 50, 0.2);
+            background: rgba(185, 54, 50, 0.03);
+        }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--purple-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.5rem;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .feature-description {
+            color: var(--gray-400);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            color: var(--gray-400);
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: rgba(185, 54, 50, 0.04);
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 3rem 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 1rem;
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--gray-800), var(--primary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--gray-400);
+            margin-top: 0.5rem;
+        }
+
+        /* CTA Section */
+        .cta-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .cta-description {
+            font-size: 1.125rem;
+            color: var(--gray-400);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-purple), var(--purple-dark));
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary-purple);
+            border: 2px solid var(--primary-purple);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(185, 54, 50, 0.06);
+            transform: translateY(-2px);
+        }
+
+        /* Brand Specific Buttons */
+        .btn-reform {
+            background-color: #3776ab !important;
+            color: #ffffff !important;
+            border: 2px solid #3776ab !important;
+            box-shadow: 0 4px 12px rgba(55, 118, 171, 0.2);
+        }
+
+        .btn-reform:hover {
+            background-color: #2b5b87 !important;
+            transform: translateY(-3px) rotate(-1deg) scale(1.05);
+            box-shadow: 0 10px 25px rgba(55, 118, 171, 0.35) !important;
+        }
+
+        .btn-github-yolo {
+            background-color: #24292e !important;
+            color: #ffffff !important;
+            border: 2px solid #24292e !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-github-yolo:hover {
+            background-color: #1a1e22 !important;
+            transform: translateY(-3px) rotate(1deg) scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25) !important;
+        }
+
+
+        /* Upload Modal */
+        .upload-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 1rem;
+        }
+
+        .modal-upload-area {
+            border: 2px dashed var(--primary-purple);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-upload-area:hover {
+            background: rgba(185, 54, 50, 0.04);
+        }
+
+        /* Girdi Kutusu: Tarama (Scanning) Efekti */
+        .document-page {
+            /* TEMA GÜNCELLEMESİ: Efekt rengi mor (purple) olarak ayarlandı */
+            --scan-grid-color: 185, 54, 50;
+            position: relative;
+            /* DEĞİŞİKLİK: Sabit boyutlar kaldırıldı, demo kutusuna sığması için ayarlandı */
+            width: 100%;
+            height: 390px;
+            /* Demo kutusu için uygun bir yükseklik */
+        }
+
+        .document-page-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            /* 'auto' idi, '100%' olarak değişti */
+            background-color: #FFF;
+            /* Beyaz "kağıt" görünümü */
+            box-shadow: 0px 1px 6px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            /* 'auto' idi, 'hidden' olarak değişti */
+            border-radius: 4px;
+            /* Hafifçe yuvarlatılmış kenarlar */
+        }
+
+        .scanning .document-page-inner::after {
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            background-size: 30px 30px;
+            background-image:
+                radial-gradient(rgba(var(--scan-grid-color), 0.25) 2px, transparent 2px),
+                linear-gradient(to right, rgba(var(--scan-grid-color), 0.3) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(var(--scan-grid-color), 0.3) 1px, transparent 1px);
+            background-position: 15.5px 15.5px;
+            opacity: 0.2;
+            animation: gridColorChange 2.5s .5s linear infinite alternate;
+        }
+
+        .document-page.scanning:before,
+        .document-page.scanning:after,
+        .scanning .document-page-inner:after {
+            display: block;
+            content: '';
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .document-page.scanning:before {
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            background-size: 200px 30px;
+            background-image: linear-gradient(to bottom, rgba(var(--scan-grid-color), 0.8) 2px, transparent 2px);
+            animation: animateGridHorizontal 5s 1.25s ease-out infinite;
+            background-repeat: repeat-y;
+            background-position-x: -200px;
+        }
+
+        .document-page.scanning:after {
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            background-size: 30px 400px;
+            background-image: linear-gradient(to right, rgba(var(--scan-grid-color), 0.8) 2px, transparent 2px);
+            animation: animateGridVertical 5s 1s ease-out infinite;
+            background-repeat: repeat-x;
+            background-position-y: -400px;
+        }
+
+        /* Çıktı kutusundaki görselin yüksekliğini standartlaştırmak için eklendi */
+        .demo-box.output img {
+            width: 100%;
+            height: 300px;
+            /* Girdi kutusuyla aynı yükseklik */
+            object-fit: cover;
+            border-radius: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Tarama Keyframe'leri */
+        @keyframes animateGridHorizontal {
+            from {
+                background-position-x: -200px;
+            }
+
+            to {
+                background-position-x: calc(100% + 200px);
+            }
+        }
+
+        @keyframes animateGridVertical {
+            from {
+                background-position-y: -400px;
+            }
+
+            to {
+                background-position-y: calc(100% + 400px);
+            }
+        }
+
+        @keyframes gridColorChange {
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Çıktı Kutusu için "Parıldama" (Shimmer) Efekti */
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%) skewX(-15deg);
+            }
+
+            100% {
+                transform: translateX(200%) skewX(-15deg);
+            }
+        }
+
+        .shimmer-effect {
+            position: relative;
+            overflow: hidden;
+            /* Parıldamanın kutu dışına taşmasını engeller */
+        }
+
+        .shimmer-effect::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.1) 20%,
+                    rgba(255, 255, 255, 0.2) 60%,
+                    rgba(255, 255, 255, 0) 100%);
+            transform: translateX(-100%);
+            z-index: 1;
+            /* Animasyon: 3 saniyede bir, 1 saniye gecikmeyle başla */
+            animation: shimmer 3s ease-in-out 1s infinite;
+        }
+
+        /* (Zaman Çizelgesi) === */
+        @media (max-width: 968px) {
+            .timeline-item {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline-line {
+                left: 20px;
+            }
+
+            .timeline-dot {
+                left: 20px;
+            }
+
+            .timeline-item:nth-child(even) {
+                direction: ltr;
+            }
+
+            .hero-container {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-title {
+                font-size: 3rem;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .comparison-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        footer {
+            background: #ffffff;
+            color: var(--gray-600);
+            padding: 3rem 1.5rem 2rem;
+            margin-top: 4rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            /* 280px'den 220px'e düşürüldü */
+            gap: var(--space-8, 2rem);
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-bottom: 2rem;
+        }
+
+        .footer-brand {
+            grid-column: span 1;
+        }
+
+        @media (min-width: 1024px) {
+            .footer-brand {
+                padding-right: 2rem;
+            }
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            text-decoration: none;
+            font-family: 'Space Grotesk', sans-serif;
+            margin-bottom: 1rem;
+            transition: color 300ms ease;
+        }
+
+        .footer-logo:hover {
+            color: var(--purple-light);
+        }
+
+        .footer-description {
+            color: var(--gray-400);
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            max-width: 500px;
+        }
+
+        .footer-socials {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .social-link {
+            color: var(--gray-400);
+            font-size: 1.6rem;
+            transition: all 300ms ease;
+            text-decoration: none;
+        }
+
+        .social-link:hover {
+            color: var(--primary-purple);
+            transform: translateY(-2px);
+        }
+
+        .footer-socials img {
+            transition: all 300ms ease;
+            filter: none;
+        }
+
+        .footer-socials img:hover {
+            filter: grayscale(0%) brightness(1);
+            transform: translateY(-2px);
+        }
+
+        .footer-section h4,
+        .footer-links h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            font-family: 'Space Grotesk', sans-serif;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-links a,
+        .footer-links li>a {
+            color: var(--gray-400);
+            text-decoration: none;
+            transition: all 300ms ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .footer-links li {
+            list-style: none;
+        }
+
+        .footer-links a:hover,
+        .footer-links li>a:hover {
+            color: var(--purple-light);
+            padding-left: 0.5rem;
+        }
+
+        .footer-links img {
+            filter: none;
+            transition: all 300ms ease;
+        }
+
+        .footer-links a:hover img {
+            filter: grayscale(0%) brightness(1);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            padding-top: 1.5rem;
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            line-height: 1.7;
+        }
+
+        .footer-bottom p {
+            margin: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Scroll to Top Button */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--purple-dark));
+            color: var(--white);
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 10px 15px -3px rgba(185, 54, 50, 0.3);
+            cursor: pointer;
+            transition: all 500ms ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .scroll-to-top.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 25px 50px -12px rgba(185, 54, 50, 0.2);
+        }
+
+        /* === INTERAKTIF KARŞILAŞTIRMA SLIDER BAŞLANGICI === */
+        .comparison-slider-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            /* Maksimum genişlik, tasarımı korur */
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            /* Kenarları yuvarlak tutar */
+            border: 2px solid rgba(185, 54, 50, 0.15);
+            background: #fdfbf7;
+            aspect-ratio: 16 / 9;
+        }
+
+        .comparison-image-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .comparison-image-wrapper>img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* Görüntünün tamamının görünmesini sağlar */
+            object-position: center;
+            pointer-events: none;
+            /* Resimlerin fare olaylarını engellememesi için */
+        }
+
+        /* "ÖNCE" görüntüsünü içeren ve kırpılacak olan katman */
+        /* "ÖNCE" görüntüsünü içeren ve altta duran katman */
+        .comparison-image-wrapper.before {
+            /* clip-path kaldırıldı, bu katman her zaman altta tam görünecek */
+            z-index: 1;
+            /* Altta duracak */
+        }
+
+        /* "SONRA" görüntüsünü içeren ve kırpılacak olan katman */
+        .comparison-image-wrapper.after {
+            /* Başlangıçta 50% göster (kaydırgacın olduğu yer) */
+            clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+            z-index: 2;
+            /* "ÖNCE" nin üzerinde olmalı */
+
+            /* GÜNCELLEME: Şeffaf PNG'lerin alttaki görseli göstermemesi için eklendi */
+            background: #000;
+        }
+
+        /* Asıl interaktif <input type="range"> kaydırgacı */
+        .comparison-slider {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            /* Tamamen görünmez olmalı */
+            z-index: 4;
+            /* Her şeyin üzerinde, fareyi bu yakalayacak */
+            cursor: col-resize;
+            /* Yeniden boyutlandırma imleci */
+        }
+
+        /* Kaydırgaç "parmağı" (thumb) - Görünmez ama alanı kaplar */
+        .comparison-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 4px;
+            /* Sadece ince bir tıklama alanı */
+            height: 100%;
+            opacity: 0;
+            /* Görünmez */
+        }
+
+        .comparison-slider::-moz-range-thumb {
+            width: 4px;
+            height: 100%;
+            opacity: 0;
+        }
+
+        /* Kaydırgaç "çubuğu" (handle) - Görsel gösterge */
+        .comparison-slider-handle {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            /* Başlangıç pozisyonu */
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: rgba(185, 54, 50, 0.7);
+            /* Ana tema rengi */
+            pointer-events: none;
+            /* Farenin slider'a gitmesine izin ver */
+            z-index: 3;
+            /* "ÖNCE" katmanının üzerinde */
+            box-shadow: 0 0 15px rgba(185, 54, 50, 0.4);
+        }
+
+        /* Çubuğun ortasındaki daire */
+        .comparison-slider-handle::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--purple-dark));
+            border-radius: 50%;
+            border: 3px solid var(--white);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            /* İkonlar için alan */
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        /* Çubuğun ortasındaki ikonlar (Animasyonlu) */
+        .comparison-handle-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--white);
+            font-size: 1rem;
+            pointer-events: none;
+            z-index: 4;
+            display: flex;
+            gap: 4px;
+            opacity: 0.8;
+
+            /* GÜNCELLEME: Yatay kaydırmayı belirten 'wiggle' animasyonu */
+            animation: wiggle-horizontal 2s infinite ease-in-out;
+        }
+
+        /* 1'e 2 karşılaştırma için "SONRA" konteyneri */
+        .after-image-container {
+            display: flex;
+            flex-direction: row;
+            /* Görselleri yan yana diz */
+            width: 100%;
+            height: 100%;
+        }
+
+        /* "SONRA" konteyneri içindeki her görsel %50 genişlik alır */
+        .after-image-container img {
+            width: 50%;
+            height: 100%;
+            object-fit: contain;
+            /* Görüntü oranını koru ve sığdır */
+            pointer-events: none;
+        }
+
+        /* === INTERAKTIF KARŞILAŞTIRMA SLIDER BİTİŞİ === */
+        /* 1. Ana slider konteynerini 2 sütunlu bir grid'e dönüştür */
+        .comparison-slider-container:has(.after-image-container img:only-child) {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            /* Sol ve Sağ, 50/50 */
+            /* 'aspect-ratio: 16 / 9' kuralı ana seçiciden miras alınır, görünüm tutarlı kalır. */
+        }
+
+        /* 2. Tüm interaktif slider elemanlarını gizle */
+        .comparison-slider-container:has(.after-image-container img:only-child) .comparison-slider,
+        .comparison-slider-container:has(.after-image-container img:only-child) .comparison-slider-handle,
+        .comparison-slider-container:has(.after-image-container img:only-child) .comparison-handle-icon {
+            display: none;
+        }
+
+        /* 3. Görüntü sarmalayıcılarını (wrapper) 'absolute' pozisyondan sıfırla */
+        /* Böylece grid sisteminde normal birer öğe olurlar. */
+        .comparison-slider-container:has(.after-image-container img:only-child) .comparison-image-wrapper {
+            position: relative;
+            /* 'absolute' pozisyonu iptal et */
+            width: 100%;
+            /* Grid hücresini doldur */
+            height: 100%;
+            /* Grid hücresini doldur */
+        }
+
+        /* 4. 'SONRA' (After) wrapper'ının kırpılmasını (clip-path) kaldır */
+        .comparison-slider-container:has(.after-image-container img:only-child) .comparison-image-wrapper.after {
+            clip-path: none;
+            z-index: auto;
+            /* HTML'de 'after' önce geldiği için otomatik olarak solda (1. grid item) yer alacaktır. */
+        }
+
+        /* 5. 'ÖNCE' (Before) wrapper'ını sıfırla */
+        .comparison-slider-container:has(.after-image-container img:only-child) .comparison-image-wrapper.before {
+            z-index: auto;
+            /* HTML'de 'before' sonra geldiği için otomatik olarak sağda (2. grid item) yer alacaktır. */
+        }
+
+        /* 6. 'ÖNCEKİ HAL' etiketinin yerini düzelt (sağdan sola al) */
+        .comparison-slider-container:has(.after-image-container img:only-child) .comparison-label.before {
+            left: 1rem;
+            right: auto;
+        }
+
+        /* 7. EN ÖNEMLİ KURAL: 
+          'SONRA' (After) konteynerindeki tek görselin, 
+          normalde (çift görselde) 50% olan genişliğini 100% yap.
+        */
+        .comparison-slider-container:has(.after-image-container img:only-child) .after-image-container img:only-child {
+            width: 100%;
+        }
+
+        /* === YENİ EK BİTİŞİ === */
+
+        /* === ZAMAN ÇİZELGESİ ANİMASYONLARI BAŞLANGIÇ === */
+
+        /* Adım 1: Belge Yükleme Animasyonu */
+
+        /* Ana görsel konteynerini animasyona hazırla */
+        .timeline-visual {
+            /* .timeline-content'den kopyalanan stil */
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 26px;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+
+            /* Animasyonu ortalamak için gereken stiller */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            /* overflow: hidden kaldırıldı, pulse efektleri için alan açıldı */
+
+            /* Metin kutusuyla aynı yüksekliği sağlamak için */
+            min-height: 200px;
+        }
+
+        .upload-animation {
+            position: relative;
+            width: 120px;
+            /* Animasyon alanı genişliği */
+            height: 120px;
+            /* Animasyon alanı yüksekliği */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Merkeze hizala */
+        }
+
+        /* 1. Hedef (Bulut) */
+        .upload-target {
+            position: absolute;
+            top: 10px;
+            font-size: 4rem;
+            /* Biraz daha belirgin bulut */
+            /* Temamızın ana kırmızısını kullanıyoruz */
+            color: var(--primary-red);
+            /* 'Kabul etme' animasyonu (hafifçe nefes alma) */
+            animation: target-pulse 2.5s infinite ease-in-out;
+            z-index: 1;
+        }
+
+        @keyframes target-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* 2. Yüklenen Dosya (PDF ikonu) */
+        .upload-file {
+            position: absolute;
+            bottom: 0;
+            font-size: 2rem;
+            /* 32px */
+            color: var(--gray-400);
+            /* 'Yüklenme' animasyonu (aşağıdan yukarı hareket) */
+            animation: file-upload 5s infinite cubic-bezier(0.5, 0, 0.1, 1);
+        }
+
+        @keyframes file-upload {
+            0% {
+                bottom: -20px;
+                opacity: 0;
+                transform: scale(0.5);
+            }
+
+            20% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            80% {
+                /* Hedefin (bulutun) tam içine girmesi için pozisyonu ayarla */
+                bottom: 60px;
+                opacity: 1;
+                transform: scale(0.6);
+                /* Bulutun içine girerken küçül */
+            }
+
+            90%,
+            100% {
+                /* Aynı pozisyonda kaybol */
+                bottom: 60px;
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+
+        /* 3. Hareket Yolu (Kayan çizgi) */
+        .upload-path {
+            position: absolute;
+            bottom: 20px;
+            /* Dosyanın başlangıç noktası */
+            top: 40px;
+            /* Hedefin altı */
+            width: 2px;
+            /* Kırmızıdan şeffafa bir gradyan */
+            background: linear-gradient(to top,
+                    var(--primary-red),
+                    var(--primary-red-light) 50%,
+                    transparent 90%);
+            background-size: 100% 200%;
+            /* Gradyanın hareket etmesi için 2 katı yükseklik */
+            animation: path-scroll 5s infinite cubic-bezier(0.5, 0, 0.1, 1);
+            opacity: 0.3;
+        }
+
+        @keyframes path-scroll {
+            0% {
+                background-position: 0% 100%;
+                /* Gradient altta başlar */
+                opacity: 0;
+            }
+
+            20% {
+                background-position: 0% 100%;
+                opacity: 1;
+            }
+
+            80% {
+                background-position: 0% 0%;
+                /* Gradient üste ulaşır */
+                opacity: 1;
+            }
+
+            90%,
+            100% {
+                background-position: 0% 0%;
+                opacity: 0;
+            }
+        }
+
+        /* === ZAMAN ÇİZELGESİ ANİMASYONLARI BİTİŞ === */
+        /* Adım 2: YOLO Analizi Animasyonu */
+
+        .yolo-animation {
+            position: relative;
+            width: 150px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 1. Sahte Belge */
+        .yolo-doc {
+            width: 100%;
+            height: 110px;
+            background: var(--gray-700);
+            border-radius: 4px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .yolo-line,
+        .yolo-line-title,
+        .yolo-line-short {
+            height: 8px;
+            background: var(--gray-500);
+            border-radius: 4px;
+        }
+
+        .yolo-line-title {
+            width: 60%;
+        }
+
+        .yolo-line {
+            width: 100%;
+        }
+
+        .yolo-line-short {
+            width: 80%;
+        }
+
+        /* 2. Tespit Kutuları */
+        .yolo-box {
+            position: absolute;
+            background: rgba(185, 54, 50, 0.1);
+            border: 2px solid var(--primary-red);
+            border-radius: 4px;
+
+            /* Animasyon için başlangıç durumu */
+            opacity: 0;
+            transform: scale(0.95);
+
+            /* Animasyon: 3 saniyelik döngü, farklı gecikmelerle */
+            animation: detect-pop 3s ease-in-out infinite;
+        }
+
+        /* Tespit animasyon keyframe'i */
+        @keyframes detect-pop {
+            0% {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            20% {
+                /* Hızla belir */
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            80% {
+                /* Ekranda kal */
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                /* Kaybol ve döngüye hazırlan */
+                opacity: 0;
+                transform: scale(0.95);
+            }
+        }
+
+        /* Kutu 1: Başlık Tespiti */
+        .box-title {
+            top: 10px;
+            left: 10px;
+            width: calc(60% + 4px);
+            height: 12px;
+            animation-delay: 0.5s;
+            /* İlk bu belirsin */
+        }
+
+        /* Kutu 2: Paragraf Tespiti */
+        .box-para {
+            top: 28px;
+            left: 10px;
+            width: calc(100% - 20px);
+            height: 48px;
+            animation-delay: 1s;
+            /* İkinci bu belirsin */
+        }
+
+        /* Adım 3: Otomatik Düzeltme (Py-reform) Animasyonu */
+
+        /* 1. 3D Sahne (Perspective Stage)
+           Bu alan, 3D transformların nasıl görüneceğini ayarlar */
+        .perspective-stage {
+            /* 3D renderlamayı etkinleştirir */
+            perspective: 300px;
+            position: relative;
+            width: 150px;
+            height: 110px;
+            /* .yolo-doc yüksekliğiyle aynı */
+        }
+
+        /* 2. Anime olan belge */
+        .doc-correction-anim {
+            width: 100%;
+            height: 100%;
+            /* Animasyonumuzu 4 saniyelik bir döngüye atıyoruz */
+            animation: flatten-and-straighten 4s infinite ease-in-out;
+            /* 3D transformların merkezini belgenin tam ortası yap */
+            transform-origin: center center;
+            /* Adım 2'deki belge stili (.yolo-doc) bu elementin içine 
+               yerleştiği için zaten stillendirilmiş olacak */
+        }
+
+        /* 3. Keyframes (Düzeltme Animasyonu) */
+        @keyframes flatten-and-straighten {
+
+            /* Başlangıç (0-20%): Düzgün Hali */
+            0%,
+            20% {
+                transform: rotateZ(0deg) rotateX(0deg) rotateY(0deg);
+                /* Düz dururken normal gölge */
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+
+            /* Bozulma (30%-50%): Eğrilik + Perspektif */
+            50% {
+                /* Hem Z ekseninde (eğrilik) hem de X/Y (perspektif) 
+                   eksenlerinde bozulmuş hali */
+                transform: rotateZ(-8deg) rotateX(10deg) rotateY(20deg);
+                /* Havalanmış gibi daha büyük gölge */
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            }
+
+            /* Düzeltme (60%-100%): Hizalama */
+            60%,
+            100% {
+                /* Hızla yerine otur (Hizalama) */
+                transform: rotateZ(0deg) rotateX(0deg) rotateY(0deg);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        /* Adım 4: Görüntü İyileştirme (Enhancement) Animasyonu */
+
+        .enhancement-animation {
+            position: relative;
+            width: 150px;
+            height: 110px;
+            /* .yolo-doc yüksekliği */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 1. Anime olan belge */
+        .enhancement-doc {
+            /* 5 saniyelik bir döngüde "iyileşme" animasyonu */
+            animation: enhance-document-filter 5s infinite ease-in-out;
+
+            /* .yolo-doc'tan gelen temel stilleri (arkaplan, padding vb.) kullanır */
+        }
+
+        /* 'filter' kullanarak belgenin "iyileşmesini" simüle et */
+        @keyframes enhance-document-filter {
+
+            /* Başlangıç (0-20%): Soluk / Bozuk Hali */
+            0%,
+            20% {
+                /* Düşük kontrast, biraz fazla parlak (soluk) ve opak */
+                filter: contrast(0.6) brightness(1.1) opacity(0.7);
+            }
+
+            /* İyileşme (60%-100%): Net Hali */
+            60%,
+            100% {
+                /* Normal, net hal */
+                filter: contrast(1) brightness(1) opacity(1);
+            }
+        }
+
+        /* 2. İyileştirme İkonları */
+        .enhancement-icon {
+            position: absolute;
+            font-size: 1.5rem;
+            /* 24px */
+            color: var(--primary-red);
+            /* Belgenin filter'ından etkilenmemesi için
+               belgenin (enhancement-doc) dışında olmalı */
+
+            /* Başlangıçta görünmez */
+            opacity: 0;
+            transform: scale(0.8);
+
+            /* Temel animasyon: 5 saniyelik döngü */
+            animation: fade-in-out 5s infinite ease-in-out;
+        }
+
+        /* İkonların belirip kaybolma zamanlaması */
+        @keyframes fade-in-out {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            /* animation-delay burayı tetikleyecek */
+            10% {
+                /* Belir */
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            30% {
+                /* Ekranda kal */
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            40%,
+            100% {
+                /* Kaybol */
+                opacity: 0;
+                transform: scale(0.8);
+            }
+        }
+
+        /* İkonları belgenin etrafına yerleştir ve gecikmelerini ayarla */
+
+        /* Parlaklık (Sun) - İlk belirsin */
+        .icon-brightness {
+            top: -10px;
+            left: -10px;
+            animation-delay: 0.5s;
+            /* Belge solukken belirir */
+        }
+
+        /* Kontrast (Half-Circle) - İkinci */
+        .icon-contrast {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 1.5s;
+            /* Tam iyileşirken belirir */
+        }
+
+        /* Keskinlik/İyileştirme (Wand) - Üçüncü */
+        .icon-sharpness {
+            bottom: -10px;
+            right: -10px;
+            animation-delay: 2.5s;
+            /* İyileştikten sonra belirir */
+        }
+
+        /* Adım 5: Gürültü Temizleme (Noise Reduction) Animasyonu */
+
+        .noise-animation-stage {
+            position: relative;
+            width: 150px;
+            height: 110px;
+            /* .yolo-doc yüksekliği */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Filtrelerin doğru çalışması için */
+            isolation: isolate;
+        }
+
+        /* 1. Temiz Belge (Altta durur) */
+        /* (.yolo-doc stili zaten mevcut, ekstra koda gerek yok) */
+
+        /* 2. Gürültü Katmanı */
+        .noise-overlay-filtered {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* HTML'de tanımladığımız SVG filtresini uygula */
+            filter: url(#noise-filter);
+            /* Başlangıçta görünmez */
+            opacity: 0;
+            /* 4 saniyelik temizleme döngüsü */
+            animation: process-noise 4s infinite ease-in-out;
+            /* Dokümanın şeklini alması için */
+            border-radius: 4px;
+            /* Sadece belge alanını etkilesin */
+            overflow: hidden;
+            /* Filtrenin belgenin üstünde olduğundan emin ol */
+            z-index: 2;
+        }
+
+        /* Gürültünün belirip kaybolma animasyonu */
+        @keyframes process-noise {
+
+            /* Başlangıç (0-20%): Gürültülü Hali */
+            0%,
+            20% {
+                opacity: 0.25;
+                /* Hafif ama görünür parazit */
+            }
+
+            /* Gürültü "temizleniyor" (30-50%) */
+            30% {
+                opacity: 0.15;
+            }
+
+            40% {
+                opacity: 0.1;
+            }
+
+            50% {
+                opacity: 0.05;
+            }
+
+            /* Temiz Hali (60%-100%): Gürültü kayboldu */
+            60%,
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* Adım 6: Çıktı Üretimi (Export) Animasyonu */
+
+        .output-animation-stage {
+            position: relative;
+            width: 150px;
+            height: 110px;
+            /* .yolo-doc yüksekliği */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .output-icon {
+            position: absolute;
+            font-size: 1.7rem;
+            /*  Biraz küçültüldü */
+
+            /* Başlangıç: Merkezin tam ortasında, görünmez ve küçük */
+            top: 50%;
+            left: 50%;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.3);
+
+            /* Animasyon: 4 saniyelik döngü */
+            animation: fly-out 4s infinite ease-out;
+        }
+
+        /* İkonların "dışarı fırlama" animasyonu */
+        @keyframes fly-out {
+            0% {
+                /* Başlangıç (Merkezde) */
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.3);
+            }
+
+            30% {
+                /* Hedefe varış (Belirginleş) */
+                opacity: 1;
+                /* --transform-end değişkeni ile hedefe git */
+                transform: var(--transform-end) scale(1);
+            }
+
+            80% {
+                /* Hedefte bekle */
+                opacity: 1;
+                transform: var(--transform-end) scale(1);
+            }
+
+            100% {
+                /* Sona gelince hızla kaybol (döngü için) */
+                opacity: 0;
+                transform: var(--transform-end) scale(0.3);
+            }
+        }
+
+        /* 1. PDF İkonu (Sol-Üst) - Kutu içinde kalacak şekilde ayarlandı */
+        .icon-pdf {
+            color: var(--primary-red);
+            --transform-end: translate(-100%, -100%);
+            /* x: sola %100, y: yukarı %100 */
+            animation-delay: 0.5s;
+        }
+
+        /* 2. Resim İkonu (Sağ-Üst) - Kutu içinde kalacak şekilde ayarlandı */
+        .icon-img {
+            color: var(--success);
+            --transform-end: translate(0%, -100%);
+            /* x: kendi yerinde, y: yukarı %100 */
+            animation-delay: 1.0s;
+        }
+
+        /* Footer Social Icons Wrapper from index.css */
+        .wrapper {
+            display: inline-flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .wrapper .icon {
+            position: relative;
+            background: #ffffff;
+            border-radius: 50%;
+            padding: 10px;
+            margin: 5px;
+            width: 50px;
+            height: 50px;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .wrapper .tooltip {
+            position: absolute;
+            top: 0;
+            font-size: 14px;
+            background: #ffffff;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .wrapper .tooltip::before {
+            position: absolute;
+            content: "";
+            height: 8px;
+            width: 8px;
+            background: #ffffff;
+            bottom: -3px;
+            left: 50%;
+            transform: translate(-50%) rotate(45deg);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .wrapper .icon:hover .tooltip {
+            top: -45px;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .wrapper .icon:hover span,
+        .wrapper .icon:hover .tooltip {
+            text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        .wrapper .twitter:hover,
+        .wrapper .twitter:hover .tooltip,
+        .wrapper .twitter:hover .tooltip::before {
+            background: #1DA1F2;
+            color: #ffffff;
+        }
+
+        .wrapper .github:hover,
+        .wrapper .github:hover .tooltip,
+        .wrapper .github:hover .tooltip::before {
+            background: #333333;
+            color: #ffffff;
+        }
+
+        .wrapper .huggingface:hover,
+        .wrapper .huggingface:hover .tooltip,
+        .wrapper .huggingface:hover .tooltip::before {
+            background: #FFD21E;
+            color: #ffffff;
+        }
+
+        .wrapper .iyte:hover,
+        .wrapper .iyte:hover .tooltip,
+        .wrapper .iyte:hover .tooltip::before {
+            background: var(--primary-red);
+            color: #ffffff;
+        }
+
+        .wrapper .lab:hover,
+        .wrapper .lab:hover .tooltip,
+        .wrapper .lab:hover .tooltip::before {
+            background: #f0f0f0;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation - matching landing.html -->
+    <nav class="navbar sticky top-0 z-[1000] glass-nav transition-all duration-300 shadow-sm" id="navbar">
+        <div class="max-w-[1400px] mx-auto px-6 py-4 flex justify-between items-center w-full">
+            <!-- Logo Section -->
+            <a href="/"
+                class="group flex items-center gap-3 text-2xl font-black text-primary font-display no-underline transition-all duration-300 hover:scale-105">
+                <img src="/static/logo.png" alt="OSPA Logo" class="h-8 w-auto object-contain">
+            </a>
+
+            <!-- Central Navigation Menu -->
+            <nav class="hidden lg:flex items-center gap-1">
+                <a href="/"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all relative group">
+                    Ana Sayfa
+                    <span
+                        class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </a>
+
+                <div class="relative group">
+                    <a href="/ocr"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all relative group">
+                        SuryaOCR
+                        <span
+                            class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+
+                <div class="relative group">
+                    <a href="/preprocessing"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-primary bg-primary/5 hover:bg-primary/10 transition-all flex items-center gap-1">
+                        Ön İşleme Aracı
+                        <span class="absolute bottom-1 left-0 w-full h-0.5 bg-primary rounded-full"></span>
+                    </a>
+                </div>
+
+                <div class="relative group">
+                    <a href="https://dbb.iyte.edu.tr/ospa.html" target="_blank"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all flex items-center gap-1">
+                        Hakkımızda
+                        <span
+                            class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+
+                <a href="https://ospa.iyte.edu.tr/#contact" target="_blank"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all relative group">
+                    İletişim
+                    <span
+                        class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </a>
+            </nav>
+
+            <!-- Stats / Right Section -->
+            <div class="flex items-center gap-6 font-mono text-[0.65rem] text-gray-500">
+                <div class="hidden xl:block w-px h-4 bg-gray-300"></div>
+                <div class="flex items-center gap-2 font-semibold text-gray-600">
+                    <i class="fas fa-microchip"></i>
+                    <span>GPU Destekli</span>
+                </div>
+                <div class="hidden xl:block w-px h-4 bg-gray-300"></div>
+                <div class="flex items-center gap-2 font-semibold text-gray-600">
+                    <span
+                        class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
+                    <span class="uppercase tracking-widest">OSPA Hızlandırıcı</span>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-gray-900 text-2xl" id="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu"
+        class="fixed inset-0 bg-white z-[100] transform translate-x-full transition-transform duration-300 md:hidden flex flex-col p-8">
+        <div class="flex justify-between items-center mb-8">
+            <span class="font-display font-bold text-2xl text-gray-900">Menü</span>
+            <button id="close-menu-btn" class="text-2xl text-gray-500 hover:text-primary">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="flex flex-col gap-6 text-lg font-medium">
+            <a href="/" class="text-text-secondary">Ana Sayfa</a>
+            <a href="/ocr" class="text-text-secondary">SuryaOCR Pro</a>
+            <a href="/preprocessing" class="text-primary font-bold">Ön İşleme Aracı</a>
+            <a href="https://ospa.iyte.edu.tr/" class="text-text-secondary">Hakkımızda</a>
+            <a href="https://ospa.iyte.edu.tr/#contact" class="text-text-secondary">İletişim</a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-magic"></i>
+                    <span>Akıllı Belge Düzeltme</span>
+                </div>
+                <h1 class="hero-title">
+                    Profesyonel Görüntü
+                    <br>
+                    <span class="highlight">Ön İşleme Aracı</span>
+                </h1>
+                <p class="hero-subtitle">
+                    YOLO tabanlı belge analizi, py-reform tabanlı otomatik eğrilik düzeltme ve gelişmiş filtreleme ile
+                    belgelerinizi OCR ve dijital arşivleme için mükemmel hale getirin.
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <div class="stat-number">YOLO</div>
+                        <div class="stat-label">Layout Analizi</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">GPU</div>
+                        <div class="stat-label">Hızlandırma</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">15+</div>
+                        <div class="stat-label">Gelişmiş Filtre</div>
+                    </div>
+                </div>
+                <div class="hero-buttons">
+                    <a href="/preprocessing" class="btn btn-primary">
+                        <i class="fas fa-bolt"></i> Hemen Dene
+                    </a>
+                    <a href="https://pypi.org/project/py-reform/" target="_blank" rel="noopener noreferrer"
+                        class="btn btn-reform">
+                        <i class="fab fa-python"></i> py-reform
+                    </a>
+                    <a href="https://github.com/opendatalab/DocLayout-YOLO" target="_blank" rel="noopener noreferrer"
+                        class="btn btn-github-yolo">
+                        <i class="fab fa-github"></i> DocLayout-YOLO
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="hero-visual">
+                <div class="ocr-demo">
+                    <div class="demo-header">
+                        <span class="demo-title">Ön İşleme Canlı Demo</span>
+                        <div class="demo-status">
+                            <span class="dot"></span>
+                            <span>İşleniyor</span>
+                        </div>
+                    </div>
+                    <div class="demo-content">
+
+                        <div class="demo-box input">
+                            <div class="demo-box-title">Girdi: Düşük Kaliteli Belge</div>
+
+                            <div class="document-page scanning">
+                                <div class="document-page-inner">
+                                    <img src="/static/comparison/comparison_before_solo.png"
+                                        alt="İşlenmemiş Belge Demosu"
+                                        style="width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 4px; position: relative; z-index: 1;">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="demo-box output shimmer-effect">
+                            <div class="demo-box-title">Çıktı: İyileştirilmiş Sonuç</div>
+
+                            <img src="/static/comparison/comparison_after.png" alt="İşlenmiş Sonuç Demosu"
+                                style="width: 100%; height: 390px; object-fit: cover; object-position: top; border-radius: 4px; position: relative; z-index: 1;">
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Before/After Comparison -->
+    <section class="comparison-section" id="karsilastirma">
+        <div class="section-header">
+            <span class="section-badge">
+                <i class="fas fa-cogs"></i> Karşılaştırma
+            </span>
+            <h2 class="section-title">Önce ve Sonra Karşılaştırması</h2>
+            <p class="section-subtitle">
+                Ön işleme aracı ile yapılan işlemlerin öncesine ve sonrasına göz atın.
+            </p>
+        </div>
+
+        <div class="comparison-container">
+
+            <div class="comparison-slider-container" id="comparisonSliderContainer">
+
+                <div class="comparison-image-wrapper after" id="mainAfterWrapper">
+                    <div class="comparison-label after">SONRA</div>
+
+                    <div class="after-image-container">
+                        <img src="/static/comparison/comparison_after.png" alt="İşlenmiş Görüntü - Sayfa 1">
+                        <img src="/static/comparison/comparison_after2.png" alt="İşlenmiş Görüntü - Sayfa 2">
+                    </div>
+                </div>
+
+                <div class="comparison-image-wrapper before" id="comparisonBeforeWrapper">
+                    <div class="comparison-label before">ÖNCE</div>
+                    <img src="/static/comparison/comparison_before.png" alt="Orijinal Görüntü" id="mainBeforeImage">
+                </div>
+
+                <div class="comparison-slider-handle" id="comparisonHandle"></div>
+
+                <div class="comparison-handle-icon" id="comparisonHandleIcon">
+                    <i class="fas fa-chevron-left"></i>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+
+                <input type="range" min="0" max="100" value="50" class="comparison-slider" id="comparisonSlider"
+                    aria-label="Karşılaştırma Kaydırgacı">
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Example Gallery -->
+    <section class="demo-section" id="ornek-uygulamalar">
+        <div class="demo-container">
+            <div class="section-header">
+                <span class="section-badge">
+                    <i class="fas fa-puzzle-piece"></i> Örnek
+                </span>
+                <h2 class="section-title">Örnek Çalışmalar</h2>
+                <p class="section-subtitle">
+                    Ön işleme aracımız ile gerçekleştirdiğimiz birkaç örneğe göz atın.
+                </p>
+            </div>
+
+            <div class="example-gallery">
+                <div class="example-card" onclick="loadExample('document')">
+                    <div class="example-image-wrapper">
+                        <img src="/static/ornekler/islenmis_hatirat_1.png" alt="Belge" class="example-image"
+                            onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzJhMmE0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOGI1Y2Y2IiBmb250LXNpemU9IjI0IiBmb250LWZhbWlseT0iQXJpYWwiPkJlbGdlPC90ZXh0Pjwvc3ZnPg=='">
+                        <div class="example-overlay">
+                            <span class="example-type">Hatırat</span>
+                        </div>
+                    </div>
+                    <div class="example-content">
+                        <h3 class="example-title">Çift Sayfa Belgeler</h3>
+                        <p class="example-description">Çift sayfa taranmış belgelerin bölünmesi ve düzeltilmesi.</p>
+                    </div>
+                </div>
+
+                <div class="example-card" onclick="loadExample('newspaper')">
+                    <div class="example-image-wrapper">
+                        <img src="/static/ornekler/islenmis_milliyet_gazete_ornegi.png" alt="Gazete"
+                            class="example-image"
+                            onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzJhMmE0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOGI1Y2Y2IiBmb250LXNpemU9IjI0IiBmb250LWZhbWlseT0iQXJpYWwiPkdhemV0ZTwvdGV4dD48L3N2Zz4='">
+                        <div class="example-overlay">
+                            <span class="example-type">Gazete</span>
+                        </div>
+                    </div>
+                    <div class="example-content">
+                        <h3 class="example-title">Tarihi Gazete Arşivi</h3>
+                        <p class="example-description">Eski gazete sayfaları için kontrast iyileştirmesi</p>
+                    </div>
+                </div>
+
+                <div class="example-card" onclick="loadExample('handwritten')">
+                    <div class="example-image-wrapper">
+                        <img src="/static/ornekler/islenmis_osmanlıca_hatirat.png" alt="El Yazısı" class="example-image"
+                            onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzJhMmE0MCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjOGI1Y2Y2IiBmb250LXNpemU9IjI0IiBmb250LWZhbWlseT0iQXJpYWwiPkVsIFlhesSxc8SxPC90ZXh0Pjwvc3ZnPg=='">
+                        <div class="example-overlay">
+                            <span class="example-type">Osmanlıca Basımlar</span>
+                        </div>
+                    </div>
+                    <div class="example-content">
+                        <h3 class="example-title">Osmanlıca Belgeler</h3>
+                        <p class="example-description">Soluk/Çift sayfa Osmanlıca metinlerin bölünmesi, kontrast ve
+                            keskinlik artırımı</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Processing Steps -->
+    <section class="demo-section" id="isleme-adimlari">
+        <div class="demo-container">
+
+            <div class="section-header">
+                <span class="section-badge">
+                    <i class="fas fa-cogs"></i> İşlem Süreci
+                </span>
+                <h2 class="section-title">Nasıl Çalışır?</h2>
+                <p class="section-subtitle">
+                    Ön işleme aracımız, belgelerinizi adım adım analiz ederek OCR için mükemmel hale getirir.
+                </p>
+            </div>
+
+            <div class="process-timeline">
+                <div class="timeline-line"></div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <span class="timeline-number">1</span>
+                        <h3 class="timeline-title">Belge Yükleme</h3>
+                        <p class="timeline-description">
+                            PDF, PNG, JPG, TIFF formatlarında belge yükleme desteği ile işlenecek belge yüklenir
+                        </p>
+                    </div>
+                    <div class="timeline-visual">
+                        <div class="upload-animation">
+                            <div class="upload-file">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="upload-path"></div>
+                            <div class="upload-target">
+                                <i class="fas fa-cloud"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <span class="timeline-number">2</span>
+                        <h3 class="timeline-title">YOLO Analizi</h3>
+                        <p class="timeline-description">
+                            DocLayout-YOLO ile belge yapısı ve bölge tespiti yapılır
+                        </p>
+                    </div>
+                    <div class="timeline-visual">
+                        <div class="yolo-animation">
+                            <div class="yolo-doc">
+                                <div class="yolo-line-title"></div>
+                                <div class="yolo-line"></div>
+                                <div class="yolo-line"></div>
+                                <div class="yolo-line-short"></div>
+                            </div>
+
+                            <div class="yolo-box box-title"></div>
+                            <div class="yolo-box box-para"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <span class="timeline-number">3</span>
+                        <h3 class="timeline-title">Otomatik Düzeltme</h3>
+                        <p class="timeline-description">
+                            Py-reform sayesinde eğrilik, perspektif düzeltme ve hizalama sağlanır
+                        </p>
+                    </div>
+                    <div class="timeline-visual">
+                        <div class="perspective-stage">
+                            <div class="doc-correction-anim">
+                                <div class="yolo-doc">
+                                    <div class="yolo-line-title"></div>
+                                    <div class="yolo-line"></div>
+                                    <div class="yolo-line"></div>
+                                    <div class="yolo-line-short"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <span class="timeline-number">4</span>
+                        <h3 class="timeline-title">Görüntü İyileştirme</h3>
+                        <p class="timeline-description">
+                            Kontrast, parlaklık, keskinlik optimizasyonu otomatik veya kullanıcı seçeneği ile yapılır
+                        </p>
+                    </div>
+                    <div class="timeline-visual">
+                        <div class="enhancement-animation">
+                            <div class="yolo-doc enhancement-doc">
+                                <div class="yolo-line-title"></div>
+                                <div class="yolo-line"></div>
+                                <div class="yolo-line"></div>
+                                <div class="yolo-line-short"></div>
+                            </div>
+
+                            <div class="enhancement-icon icon-brightness">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div class="enhancement-icon icon-contrast">
+                                <i class="fas fa-circle-half-stroke"></i>
+                            </div>
+                            <div class="enhancement-icon icon-sharpness">
+                                <i class="fas fa-wand-magic-sparkles"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <span class="timeline-number">5</span>
+                        <h3 class="timeline-title">Gürültü Temizleme</h3>
+                        <p class="timeline-description">
+                            Bilateral filtre ve morfolojik işlemler otomatik veya kullanıcı seçeneği ile yapılır
+                        </p>
+                    </div>
+                    <div class="timeline-visual">
+                        <div class="noise-animation-stage">
+                            <div class="yolo-doc">
+                                <div class="yolo-line-title"></div>
+                                <div class="yolo-line"></div>
+                                <div class="yolo-line"></div>
+                                <div class="yolo-line-short"></div>
+                            </div>
+
+                            <svg style="display:none;" width="0" height="0">
+                                <filter id="noise-filter">
+                                    <feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="3"
+                                        stitchTiles="stitch" />
+                                </filter>
+                            </svg>
+
+                            <div class="noise-overlay-filtered"></div>
+                        </div>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <span class="timeline-number">6</span>
+                        <h3 class="timeline-title">Çıktı Üretimi</h3>
+                        <p class="timeline-description">
+                            PDF, PNG, JPG, TIFF çoklu formatlarda kaydetme imkanı sayesinde çıktılar istenilen formatta
+                            alınır
+                        </p>
+                    </div>
+                    <div class="timeline-visual">
+                        <div class="output-animation-stage">
+                            <div class="yolo-doc">
+                                <div class="yolo-line-title"></div>
+                                <div class="yolo-line"></div>
+                                <div class="yolo-line"></div>
+                                <div class="yolo-line-short"></div>
+                            </div>
+
+                            <div class="output-icon icon-pdf">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="output-icon icon-img">
+                                <i class="fas fa-file-image"></i>
+                            </div>
+                            <div class="output-icon icon-tiff">
+                                <i class="fas fa-file-lines"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="demo-section" id="ozellikler">
+        <div class="demo-container">
+            <div class="section-header">
+                <span class="section-badge">
+                    <i class="fas fa-list-alt"></i> Özellikler
+                </span>
+                <h2 class="section-title">Gelişmiş Özellikler</h2>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="feature-title">YOLO Belge Analizi</h3>
+                    </div>
+                    <p class="feature-description">
+                        DocLayout-YOLO modeli ile belge bölgelerini otomatik tespit eder. Başlık, paragraf,
+                        tablo ve görsel alanlarını tanımlar.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Otomatik sayfa ve Gazete tespiti </li>
+                        <li>%90+ doğruluk oranı</li>
+                        <li>GPU hızlandırmalı işleme</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <h3 class="feature-title">Otomatik İyileştirme</h3>
+                    </div>
+                    <p class="feature-description">
+                        Belge tipini algılayıp en uygun iyileştirme parametrelerini otomatik uygular.
+                        Gazete, kitap ve resmi belgeler için özel profiller.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Akıllı kontrast ayarlama</li>
+                        <li>Adaptif eşikleme</li>
+                        <li>Otomatik gürültü temizleme</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <h3 class="feature-title">Çoklu Format Desteği</h3>
+                    </div>
+                    <p class="feature-description">
+                        PDF, PNG, JPG, TIFF formatlarında girdi kabul eder. İşlenmiş belgeleri
+                        istenilen formatta kaydeder.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Çok sayfalı PDF işleme</li>
+                        <li>TIFF stack desteği</li>
+                        <li>Toplu dönüştürme</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <h3 class="feature-title">Yüksek Performans</h3>
+                    </div>
+                    <p class="feature-description">
+                        Nvidia CUDA destekli GPU hızlandırma ve çoklu işlemci optimizasyonu ile saniyeler
+                        içinde sonuç.
+                    </p>
+                    <ul class="feature-list">
+                        <li>GPU desteği ile hızlı işlem imkanı</li>
+                        <li>Paralel işleme</li>
+                        <li>Gerçek zamanlı önizleme</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="fas fa-filter"></i>
+                        </div>
+                        <h3 class="feature-title">Gelişmiş Filtreler</h3>
+                    </div>
+                    <p class="feature-description">
+                        Bilateral filtre, Gaussian blur, morfolojik operasyonlar ve edge enhancement
+                        gibi profesyonel filtreler.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Otomatik İyileştirme ve Siyah Beyaz</li>
+                        <li>Özelleştirilebilir parametreler</li>
+                        <li>Zincirleme filtre uygulama</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-header">
+                        <div class="feature-icon">
+                            <i class="fas fa-newspaper"></i>
+                        </div>
+                        <h3 class="feature-title">Gazete Modu</h3>
+                    </div>
+                    <p class="feature-description">
+                        Tarihi gazete arşivleri için özel işleme modu.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Sütun bazlı analiz</li>
+                        <li>Sararmış kağıt düzeltme</li>
+                        <li>Otomatik gazete tespiti</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="demo-section" id="sonuc">
+        <div class="section-header">
+            <span class="section-badge">
+                <i class="fas fa-trophy"></i> Sonuç
+            </span>
+            <h2 class="section-title"> Hibrit Sistem Sayesinde</h2>
+        </div>
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value">10x</div>
+                    <div class="stat-label">Daha Hızlı İşleme</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">%90+</div>
+                    <div class="stat-label">Tespit Doğruluğu</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">AUTO</div>
+                    <div class="stat-label">Otomatik Sayfa Tespiti</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">GPU</div>
+                    <div class="stat-label">Desteği ile Paralel İşleme</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="demo-section">
+        <div class="cta-section">
+            <h2 class="cta-title">
+                Tarihsel Belgelerinizi Dijitalleştirmeye<br>
+                Hazır mısınız?
+            </h2>
+            <p class="cta-description">
+                Belgelerinizi yükleyin ve güçlü ön işleme araçlarımızı kullanarak
+                OCR başarı oranınızı artırın
+            </p>
+            <div class="cta-buttons">
+                <a href="/preprocessing" class="btn btn-primary">
+                    <i class="fas fa-bolt"></i> Ön İşleme Aracına Git
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upload Modal -->
+    <div class="upload-modal" id="uploadModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeUploadModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="modal-title" id="modalTitle">Görüntü Yükle</h3>
+            <div class="modal-upload-area" id="modalUploadArea">
+                <input type="file" id="modalFileInput" accept="image/*" style="display: none;">
+                <i class="fas fa-cloud-upload-alt"
+                    style="font-size: 3rem; color: var(--primary-purple); margin-bottom: 1rem;"></i>
+                <p style="color: var(--gray-800); margin-bottom: 0.5rem;">Dosya seçmek için tıklayın</p>
+                <p style="color: var(--gray-500); font-size: 0.875rem;">PNG, JPG, TIFF (Maks 10MB)</p>
+            </div>
+            <div style="margin-top: 1rem; text-align: center;">
+                <button class="btn btn-primary" onclick="document.getElementById('modalFileInput').click()">
+                    Dosya Seç
+                </button>
+            </div>
+        </div>
+    </div>
+    <button class="scroll-to-top" id="scrollToTop">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Mobile Menu Toggle
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const closeMenuBtn = document.getElementById('close-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.remove('translate-x-full');
+                    mobileMenu.classList.add('translate-x-0');
+                });
+            }
+
+            if (closeMenuBtn && mobileMenu) {
+                closeMenuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.remove('translate-x-0');
+                    mobileMenu.classList.add('translate-x-full');
+                });
+            }
+
+            // Close mobile menu when clicking a link
+            if (mobileMenu) {
+                mobileMenu.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        mobileMenu.classList.remove('translate-x-0');
+                        mobileMenu.classList.add('translate-x-full');
+                    });
+                });
+            }
+
+            const scrollToTopBtn = document.getElementById('scrollToTop');
+
+            if (scrollToTopBtn) {
+                // Sayfa kaydırıldığında düğmeyi göster/gizle
+                window.addEventListener('scroll', () => {
+                    if (window.scrollY > 300) {
+                        scrollToTopBtn.classList.add('show');
+                    } else {
+                        scrollToTopBtn.classList.remove('show');
+                    }
+                });
+
+                // Tıklandığında sayfanın başına git
+                scrollToTopBtn.addEventListener('click', () => {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Global variables
+        let currentUploadType = null;
+        let beforeImage = null;
+        let afterImage = null;
+
+        // Upload modal functions
+        function openUploadModal(type) {
+            currentUploadType = type;
+            const modal = document.getElementById('uploadModal');
+            const title = document.getElementById('modalTitle');
+
+            if (type === 'before') {
+                title.textContent = 'İşleme Öncesi Görüntü Yükle';
+            } else {
+                title.textContent = 'İşlenmiş Görüntü Yükle';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('active');
+            currentUploadType = null;
+        }
+
+        // File input handler
+        document.getElementById('modalFileInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        });
+
+        // Modal upload area click handler
+        document.getElementById('modalUploadArea').addEventListener('click', function () {
+            document.getElementById('modalFileInput').click();
+        });
+
+        // Drag and drop handlers
+        const modalUploadArea = document.getElementById('modalUploadArea');
+
+        modalUploadArea.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            this.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+        });
+
+        modalUploadArea.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            this.style.backgroundColor = '';
+        });
+
+        modalUploadArea.addEventListener('drop', function (e) {
+            e.preventDefault();
+            this.style.backgroundColor = '';
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        // File upload handler
+        function handleFileUpload(file) {
+            // Validate file
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff'];
+            if (!validTypes.includes(file.type)) {
+                alert('Lütfen geçerli bir görüntü dosyası seçin (PNG, JPG, TIFF)');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                alert('Dosya boyutu 10MB\'dan küçük olmalıdır');
+                return;
+            }
+
+            // Read and display file
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const imgSrc = e.target.result;
+
+                if (currentUploadType === 'before') {
+                    beforeImage = imgSrc;
+                    displayImage('before', imgSrc);
+                } else {
+                    afterImage = imgSrc;
+                    displayImage('after', imgSrc);
+                }
+
+                closeUploadModal();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Display uploaded image
+        function displayImage(type, src) {
+            const containerId = type === 'before' ? 'beforeImageContainer' : 'afterImageContainer';
+            const container = document.getElementById(containerId);
+
+            container.innerHTML = `
+                <img src="${src}" alt="${type === 'before' ? 'Önce' : 'Sonra'}" class="comparison-image">
+                <button onclick="removeImage('${type}')" style="position: absolute; top: 10px; right: 10px; background: rgba(239, 68, 68, 0.8); border: none; color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
+                    <i class="fas fa-trash"></i> Kaldır
+                </button>
+            `;
+        }
+
+        // Remove image
+        function removeImage(type) {
+            const containerId = type === 'before' ? 'beforeImageContainer' : 'afterImageContainer';
+            const container = document.getElementById(containerId);
+
+            if (type === 'before') {
+                beforeImage = null;
+            } else {
+                afterImage = null;
+            }
+
+            container.innerHTML = `
+                <div class="comparison-upload-placeholder" onclick="openUploadModal('${type}')">
+                    <i class="fas fa-cloud-upload-alt comparison-upload-icon"></i>
+                    <p class="comparison-upload-text">${type === 'before' ? 'Örnek görüntü yükle' : 'İşlenmiş görüntü yükle'}</p>
+                    <p class="comparison-upload-hint">veya sürükle bırak</p>
+                </div>
+            `;
+        }
+
+        // Load example comparison
+        function loadExampleComparison() {
+            // Gerçek örnek görsellerin yollarını buraya ekleyin
+            const exampleBefore = '/static/comparison/İşlenmemiş Belge-1.png'; // Kendi "önce" görselinizin yolu
+            const exampleAfter = '/static/comparison/İşlenmiş Sonuç-1.png';  // Kendi "sonra" görselinizin yolu
+
+            displayImage('before', exampleBefore);
+            displayImage('after', exampleAfter);
+
+            // Show notification
+            showNotification('Örnek karşılaştırma yüklendi!');
+        }
+
+        // Load specific example
+        const exampleData = {
+            'newspaper': {
+                title: 'Tarihi Gazete Arşivi',
+                before: '/static/ornekler/islenmemis_milliyet_gazete_ornegi.jpg', // Örn: Tam sayfa gazete
+                // Gazeteler genelde 2'ye bölündüğü için 2 "sonra" görseli
+                after: [
+                    '/static/ornekler/islenmis_milliyet_gazete_ornegi.png'
+                ]
+            },
+            'document': {
+                title: 'Çift Sayfa Belgeler',
+                before: '/static/ornekler/islenmemis_hatirat.png', // Örn: Eğik taranmış A4
+                // Resmi belgeler genelde 1'e 1 işlenir
+                after: [
+                    '/static/ornekler/islenmis_hatirat_1.png',
+                    '/static/ornekler/islenmis_hatirat_2.png',
+                ]
+            },
+            'handwritten': {
+                title: 'Osmanlıca Belgeler',
+                before: '/static/ornekler/islenmemis_osmanlıca_hatirat.png', // Örn: Soluk el yazısı
+                // El yazmaları da genelde 1'e 1 işlenir
+                after: [
+                    '/static/ornekler/islenmis_osmanlıca_hatirat.png',
+                    '/static/ornekler/islenmis_osmanlıca_hatirat_2.png'
+                ]
+            }
+        };
+
+        /**
+         * "Örnek Uygulamalar" bölümünden seçilen örneği ana slider'a yükler.
+         * @param {string} type 'newspaper', 'document', or 'handwritten'
+         */
+        function loadExample(type) {
+            const data = exampleData[type];
+            if (!data) {
+                console.error('Bilinmeyen örnek tipi:', type);
+                return;
+            }
+
+            // İlgili DOM elementlerini seç
+            const beforeImageEl = document.getElementById('mainBeforeImage');
+            const afterContainerEl = document.querySelector('#mainAfterWrapper .after-image-container');
+            const sliderSectionEl = document.getElementById('karsilastirma'); // Tüm "karsilastirma" bölümü
+
+            if (!beforeImageEl || !afterContainerEl || !sliderSectionEl) {
+                console.error('Slider DOM elementleri bulunamadı. IDleri kontrol edin: #mainBeforeImage, #mainAfterWrapper .after-image-container, #karsilastirma');
+                return;
+            }
+
+            // --- Görselleri Güncelle ---
+
+            // 1. "ÖNCE" (before) görselinin kaynağını (src) değiştir
+            beforeImageEl.src = data.before;
+
+            // 2. "SONRA" (after) görsellerini yeniden oluştur
+            // Önce mevcut görselleri temizle
+            afterContainerEl.innerHTML = '';
+
+            // Yeni "sonra" görsellerini oluştur ve 'after-image-container' içine ekle
+            data.after.forEach((src, index) => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = `${data.title} - İşlenmiş Görüntü ${index + 1}`;
+
+                // Görsel yüklenemezse çalışacak hata yönetimi
+                img.onerror = () => {
+                    img.alt = `Görsel yüklenemedi: ${src}`;
+                    // Burada bir placeholder SVG veya hata mesajı gösterebilirsiniz.
+                };
+
+                afterContainerEl.appendChild(img);
+            });
+
+            // "Önce" görseli için hata yönetimi
+            beforeImageEl.onerror = () => {
+                beforeImageEl.alt = `Görsel yüklenemedi: ${data.before}`;
+            };
+
+            // --- Kullanıcı Deneyimini İyileştir ---
+
+            // 3. Bildirim göster (zaten var olan showNotification fonksiyonunu kullanır)
+            showNotification(`'${data.title}' örneği yüklendi.`);
+
+            // 4. Kullanıcıyı slider'ın olduğu bölüme pürüzsüz (smooth) bir şekilde kaydır
+            sliderSectionEl.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+
+            // 5. Slider'ı başlangıç pozisyonuna (50%) geri al
+            const slider = document.getElementById('comparisonSlider');
+            if (slider) {
+                slider.value = 50;
+
+                // Slider'ın pozisyonunu güncelleyen 'updateSliderPosition' fonksiyonunu
+                // tetiklemek için manuel olarak bir 'input' olayı gönderiyoruz.
+                const event = new Event('input', { bubbles: true });
+                slider.dispatchEvent(event);
+            }
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: linear-gradient(135deg, var(--primary-purple), var(--purple-dark));
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(185, 54, 50, 0.3);
+                z-index: 3000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Add animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function () {
+            // Sayfa yüklendiğinde Interaktif Karşılaştırma Slider'ını başlat
+            initComparisonSlider();
+
+
+            // --- YENİ EKLENDİ: Scroll ile Yüklenme Efekti (Intersection Observer) ---
+
+            // 1. Gözlemciyi ayarla
+            const observerOptions = {
+                threshold: 0.1, // Elementin %10'u görününce tetikle
+                rootMargin: '0px 0px -100px 0px' // Ekranın altından 100px önce tetikle
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // 2. Görünür olan elemente 'fadeInUp' animasyonunu uygula
+                        entry.target.style.animation = 'fadeInUp 1s ease forwards';
+
+                        // 3. Animasyon bir kez tetiklendikten sonra gözlemeyi bırak
+                        // (Performans için önemlidir, her seferinde oynamasını engeller)
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            // 4. Gözlemlenecek elementleri seç (Bu sayfaya özel)
+            // .timeline-item -> Nasıl Çalışır?
+            // .example-card  -> Örnek Çalışmalar
+            // .feature-card  -> Özellikler
+            // .stat-item     -> Sonuç
+            document.querySelectorAll('.timeline-item, .example-card, .feature-card, .stat-item').forEach(el => {
+                // Başlangıçta görünmez yap (Animasyonun düzgün çalışması için)
+                el.style.opacity = 0;
+                observer.observe(el);
+            });
+            // --- YENİ EK BİTİŞİ ---
+
+        });
+
+        // Interaktif Karşılaştırma Slider'ı (GÜNCELLENMİŞ MANTIK)
+        function initComparisonSlider() {
+            const container = document.getElementById('comparisonSliderContainer');
+            if (!container) return; // Eğer slider yoksa fonksiyonu durdur
+
+            const slider = document.getElementById('comparisonSlider');
+            const afterWrapper = document.getElementById('mainAfterWrapper');
+            const handle = document.getElementById('comparisonHandle');
+            const handleIcon = document.getElementById('comparisonHandleIcon');
+
+            // Hedef wrapper'ların bulunduğundan emin ol
+            if (!afterWrapper || !slider || !handle || !handleIcon) {
+                console.error('Slider DOM elementleri bulunamadı. IDleri kontrol edin: #mainAfterWrapper, #comparisonSlider, #comparisonHandle, #comparisonHandleIcon');
+                return;
+            }
+
+            // Slider'ı güncelleyen ana fonksiyon
+            function updateSliderPosition(value) {
+
+                // YENİ KONTROL:
+                // CSS :has() kuralı slider'ı gizlediyse (display: none),
+                // JavaScript inline stilini (clip-path) UYGULAMA.
+                // 'computedStyle' anlık CSS durumunu okur.
+                const sliderStyle = window.getComputedStyle(slider);
+
+                if (sliderStyle.display === 'none') {
+                    // Statik mod aktif. JavaScript'in inline clip-path'ını temizle
+                    // ki CSS'teki 'clip-path: none' kuralı çalışabilsin.
+                    if (afterWrapper.style.clipPath) { // Sadece varsa temizle
+                        afterWrapper.style.clipPath = '';
+                    }
+                    // handle ve icon'ların pozisyonunu da varsayılana al
+                    handle.style.left = '50%';
+                    handleIcon.style.left = '50%';
+                    return; // Fonksiyondan erken çık
+                }
+
+                // --- Slider modu aktifse (normal çalışma) ---
+
+                // "SONRA" katmanının kırpılma alanını (clip-path) güncelle
+                afterWrapper.style.clipPath = `polygon(0 0, ${value}% 0, ${value}% 100%, 0 100%)`;
+
+                // Görsel çubuğun pozisyonunu güncelle
+                handle.style.left = `${value}%`;
+
+                // Ortadaki ikonların pozisyonunu güncelle
+                handleIcon.style.left = `${value}%`;
+            }
+
+            // Slider hareket ettirildiğinde (input olayı)
+            slider.addEventListener('input', (e) => {
+                updateSliderPosition(e.target.value);
+            });
+
+            // Sayfa yüklendiğinde slider'ın başlangıç değerini ayarla
+            // (HTML'deki value="50" ile eşleşir)
+            updateSliderPosition(slider.value);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. Tarayıcıya 'kaydırma konumunu sen hatırlama' diyoruz.
+            if (history.scrollRestoration) {
+                history.scrollRestoration = 'manual';
+            }
+
+            // 2. Sayfa yenilenmek üzereyken (F5, yönlendirme vb.)
+            window.onbeforeunload = function () {
+                // Sayfayı en üste (0, 0) kaydır.
+                window.scrollTo(0, 0);
+            };
+        });
+    </script>
+    <!-- Footer - matching landing.html -->
+    <footer class="border-t border-gray-100 bg-white py-16 mt-auto w-full relative z-10">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
+
+                <!-- Brand Section -->
+                <div class="flex flex-col gap-6">
+                    <a href="/" class="flex items-center group w-fit">
+                        <div class="relative">
+                            <img src="/static/logo.png" alt="OSPA Logo"
+                                class="h-14 w-auto object-contain relative z-10 filter drop-shadow-sm group-hover:drop-shadow-md transition-all duration-300">
+                            <div
+                                class="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-500 -z-0 opacity-0 group-hover:opacity-40">
+                            </div>
+                        </div>
+                    </a>
+                    <p class="text-sm text-gray-500 font-medium leading-relaxed max-w-xs">
+                        Tarihsel belgeler için profesyonel görüntü ön işleme ve OCR çözüm platformu.
+                    </p>
+                </div>
+
+                <!-- Bilgi Sayfaları Section -->
+                <div class="flex flex-col gap-6">
+                    <h4 class="text-sm font-bold text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-2">
+                        İlgili Sayfalar</h4>
+                    <ul class="flex flex-col gap-4">
+                        <li>
+                            <a href="/preprocessing-info"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-magic w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Ön İşleme İnfo</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/ocr-info"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-book w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">SuryaOCR İnfo</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Biz Kimiz? Section -->
+                <div class="flex flex-col gap-6">
+                    <h4 class="text-sm font-bold text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-2">
+                        Biz Kimiz?</h4>
+                    <ul class="flex flex-col gap-4">
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-globe w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Projemiz</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/#team" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-users w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Ekibimiz</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/#works" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-puzzle-piece w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Çalışmalarımız</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Dış Bağlantılar Section -->
+                <div class="flex flex-col gap-6">
+                    <h4 class="text-sm font-bold text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-2">
+                        Dış Bağlantılar</h4>
+                    <ul class="flex flex-col gap-4">
+                        <li>
+                            <a href="https://iyte.edu.tr/" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors overflow-hidden">
+                                    <img src="/static/iyte-logo.png" alt="İYTE"
+                                        class="h-[22px] w-auto object-contain transition-all contrast-125">
+                                </div>
+                                <span class="font-bold">İYTE</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://huggingface.co/dbbiyte" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg"
+                                        alt="Hugging Face" class="h-5 w-auto">
+                                </div>
+                                <span class="font-bold">HuggingFace</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://github.com/iytedbb" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fab fa-github text-[18px] text-gray-400 group-hover:text-primary transition-colors"></i>
+                                </div>
+                                <span class="font-bold">GitHub</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Bottom Section -->
+            <div
+                class="mt-16 border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-8">
+                <p class="text-[11px] font-medium text-gray-400 leading-relaxed max-w-2xl text-center md:text-left">
+                    © 323K372 NUMARALI TÜBİTAK 1001 Projesi | Osmanlı'dan Cumhuriyet'e Sosyo-Politik Ağ Analizi Yapay
+                    Zekâ Yoluyla Dönem Tanıklıklarını Yeniden Okumak (1900-1940)
+                </p>
+
+                <ul class="wrapper">
+                    <li class="icon twitter">
+                        <span class="tooltip">Twitter / X</span>
+                        <a href="https://x.com/iytedbb" target="_blank"
+                            class="flex items-center justify-center w-full h-full text-inherit no-underline">
+                            <i class="fab fa-x-twitter text-[18px]"></i>
+                        </a>
+                    </li>
+                    <li class="icon github">
+                        <span class="tooltip">GitHub</span>
+                        <a href="https://github.com/Panatios" target="_blank"
+                            class="flex items-center justify-center w-full h-full text-inherit no-underline">
+                            <i class="fab fa-github text-[18px]"></i>
+                        </a>
+                    </li>
+                    <li class="icon huggingface">
+                        <span class="tooltip">HuggingFace</span>
+                        <a href="https://huggingface.co/dbbiyte" target="_blank"
+                            class="flex items-center justify-center w-full h-full text-inherit no-underline">
+                            <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg" alt=""
+                                class="w-6 h-6">
+                        </a>
+                    </li>
+                    <li class="icon iyte">
+                        <span class="tooltip">İYTE</span>
+                        <a href="https://iyte.edu.tr/" target="_blank"
+                            class="flex items-center justify-center w-full h-full p-0">
+                            <img src="/static/iyte-logo.png" alt="İYTE"
+                                class="w-[28px] h-auto object-contain transition-all contrast-125">
+                        </a>
+                    </li>
+                    <li class="icon lab">
+                        <span class="tooltip">DBB Lab</span>
+                        <a href="https://dbb.iyte.edu.tr/" target="_blank"
+                            class="flex items-center justify-center w-full h-full p-0">
+                            <img src="/static/lab-icon.png" alt="Lab"
+                                class="w-[24px] h-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

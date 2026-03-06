@@ -1,0 +1,49 @@
+# Python generated files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables & Secrets - CRITICAL
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite3
+*.sqlite
+dump.rdb
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Uploads & Data
+uploads/
+data/
+app/database/veriler/
+outputs/
+models/
+cache/
+preprocessing_outputs/
+preprocessing_cache/
+*.pt
+
+# Build artifacts
+build/
+dist/
+wheels/
+*.egg-info/

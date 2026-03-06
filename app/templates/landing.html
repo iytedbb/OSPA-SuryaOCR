@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSPA - SuryaOCR Pro - Profesyonel Belge İşleme Platformu</title>
+    <link rel="icon" href="/static/o-ospa.png" type="image/png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#b93632',
+                            dark: '#8e2825',
+                            light: '#d64d48',
+                            50: '#fef2f2',
+                            20: 'rgba(185, 54, 50, 0.2)'
+                        },
+                        cream: '#fdfbf7',
+                        text: {
+                            main: '#2d3436',
+                            secondary: '#636e72',
+                        }
+                    },
+                    fontFamily: {
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                        body: ['"Inter"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    animation: {
+                        'spin-slow': 'spin 8s linear infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'slideUp': 'slideUp 0.8s ease-out both',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #fdfbf7;
+            color: #2d3436;
+        }
+
+        /* Glass Navigation */
+        .glass-nav {
+            background: rgba(253, 251, 247, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(185, 54, 50, 0.1);
+        }
+
+        /* Footer Social Icons Wrapper from index.css */
+        .wrapper {
+            display: inline-flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .wrapper .icon {
+            position: relative;
+            background: #ffffff;
+            border-radius: 50%;
+            padding: 10px;
+            margin: 5px;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 1px solid #f0f2f6;
+            color: #636e72;
+            text-decoration: none;
+        }
+
+        .wrapper .tooltip {
+            position: absolute;
+            top: 0;
+            font-size: 12px;
+            background: #ffffff;
+            color: #ffffff;
+            padding: 5px 8px;
+            border-radius: 5px;
+            box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            white-space: nowrap;
+        }
+
+        .wrapper .tooltip::before {
+            position: absolute;
+            content: "";
+            height: 8px;
+            width: 8px;
+            background: #ffffff;
+            bottom: -3px;
+            left: 50%;
+            transform: translate(-50%) rotate(45deg);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .wrapper .icon:hover .tooltip {
+            top: -45px;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .wrapper .icon:hover span,
+        .wrapper .icon:hover .tooltip {
+            text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        .wrapper .twitter:hover,
+        .wrapper .twitter:hover .tooltip,
+        .wrapper .twitter:hover .tooltip::before {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .wrapper .github:hover,
+        .wrapper .github:hover .tooltip,
+        .wrapper .github:hover .tooltip::before {
+            background: #333333;
+            color: #ffffff;
+        }
+
+        .wrapper .huggingface:hover,
+        .wrapper .huggingface:hover .tooltip,
+        .wrapper .huggingface:hover .tooltip::before {
+            background: #FFD21E;
+            color: #ffffff;
+        }
+
+        .wrapper .iyte:hover,
+        .wrapper .iyte:hover .tooltip,
+        .wrapper .iyte:hover .tooltip::before {
+            background: #b93632;
+            color: #ffffff;
+        }
+
+        .wrapper .lab:hover,
+        .wrapper .lab:hover .tooltip,
+        .wrapper .lab:hover .tooltip::before {
+            background: #f7f7f7;
+            color: #000000;
+        }
+
+        /* Neural Background Canvas */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.25;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+        }
+    </style>
+</head>
+
+<body class="font-body antialiased selection:bg-primary/20 selection:text-primary-dark flex flex-col min-h-screen">
+
+    <!-- Neural Background -->
+    <canvas id="neural-canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-[1000] glass-nav transition-all duration-300 shadow-sm" id="navbar">
+        <div class="max-w-[1400px] mx-auto px-6 py-4 flex justify-between items-center w-full">
+            <!-- Logo Section -->
+            <a href="/"
+                class="group flex items-center gap-3 text-2xl font-black text-primary font-display no-underline transition-all duration-300 hover:scale-105">
+                <img src="/static/logo.png" alt="OSPA Logo" class="h-8 w-auto object-contain">
+            </a>
+
+            <!-- Central Navigation Menu -->
+            <nav class="hidden lg:flex items-center gap-1">
+                <a href="/"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold text-primary bg-primary/5 hover:bg-primary/10 transition-all flex items-center gap-1">
+                    Ana Sayfa
+                    <span class="absolute bottom-1 left-0 w-full h-0.5 bg-primary rounded-full"></span>
+                </a>
+
+                <div class="relative group">
+                    <a href="/ocr"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all relative group">
+                        SuryaOCR
+                        <span
+                            class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+
+                <div class="relative group">
+                    <a href="/preprocessing"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all flex items-center gap-1">
+                        Ön İşleme Aracı
+                        <span
+                            class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+
+                <div class="relative group">
+                    <a href="https://dbb.iyte.edu.tr/ospa.html" target="_blank"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all flex items-center gap-1">
+                        Hakkımızda
+                        <span
+                            class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+
+                <a href="https://ospa.iyte.edu.tr/#contact" target="_blank"
+                    class="px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 hover:text-primary transition-all relative group">
+                    İletişim
+                    <span
+                        class="absolute bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </a>
+            </nav>
+
+            <!-- Stats / Right Section -->
+            <div class="flex items-center gap-6 font-mono text-[0.65rem] text-gray-500">
+                <div class="hidden xl:block w-px h-4 bg-gray-300"></div>
+                <div class="flex items-center gap-2 font-semibold text-gray-600">
+                    <i class="fas fa-microchip"></i>
+                    <span>GPU Destekli</span>
+                </div>
+                <div class="hidden xl:block w-px h-4 bg-gray-300"></div>
+                <div class="flex items-center gap-2 font-semibold text-gray-600">
+                    <span
+                        class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
+                    <span class="uppercase tracking-widest">OSPA Hızlandırıcı</span>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button class="md:hidden text-gray-900 text-2xl" id="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu"
+        class="fixed inset-0 bg-white z-[100] transform translate-x-full transition-transform duration-300 md:hidden flex flex-col p-8">
+        <div class="flex justify-between items-center mb-8">
+            <span class="font-display font-bold text-2xl text-gray-900">Menü</span>
+            <button id="close-menu-btn" class="text-2xl text-gray-500 hover:text-primary">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="flex flex-col gap-6 text-lg font-medium">
+            <a href="/" class="text-primary font-bold">Ana Sayfa</a>
+            <a href="/ocr" class="text-text-secondary">SuryaOCR Pro</a>
+            <a href="/preprocessing" class="text-text-secondary">Ön İşleme Aracı</a>
+            <a href="https://ospa.iyte.edu.tr/" class="text-text-secondary">Hakkımızda</a>
+            <a href="/contact" class="text-text-secondary">İletişim</a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="relative flex-grow flex items-center justify-center py-20 overflow-hidden">
+        <div class="container max-w-7xl mx-auto px-6 relative z-10 text-center">
+
+            <div
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary font-bold text-sm mb-8 animate-[slideDown_0.8s_ease-out]">
+                <span class="relative flex h-2 w-2">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+                Yapay Zeka Destekli OCR Motoru v2.0
+            </div>
+
+            <h1
+                class="font-display font-black text-5xl md:text-7xl lg:text-8xl text-gray-900 mb-8 leading-tight tracking-tight animate-[slideUp_0.8s_ease-out_0.2s_both]">
+                Belgelerinizi <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-light">İşlenebilir
+                    Veriye</span> Dönüştürün
+            </h1>
+
+            <p
+                class="text-xl text-text-secondary max-w-2xl mx-auto mb-12 leading-relaxed animate-[slideUp_0.8s_ease-out_0.4s_both]">
+                OSPA SuryaOCR, gelişmiş yapay zeka modelleriyle belgelerinizi analiz eder,
+                tabloları tanır ve 90+ dilde metinleri en yüksek doğrulukla dijitalleştirir.
+            </p>
+
+            <div
+                class="flex flex-col sm:flex-row items-center justify-center gap-4 animate-[slideUp_0.8s_ease-out_0.6s_both]">
+                <a href="/ocr"
+                    class="group px-8 py-4 rounded-xl bg-primary text-white font-bold text-lg shadow-xl shadow-primary/20 hover:bg-primary-dark hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-1 transition-all duration-300 flex items-center gap-3">
+                    <i class="fas fa-rocket group-hover:rotate-12 transition-transform"></i>
+                    Hemen Başla
+                </a>
+                <a href="#features"
+                    class="px-8 py-4 rounded-xl bg-white text-gray-900 border border-gray-200 font-bold text-lg hover:bg-gray-50 hover:border-gray-300 transition-all duration-300 flex items-center gap-3">
+                    <i class="fas fa-arrow-down"></i>
+                    Özellikleri Keşfet
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- System Details Section -->
+    <section id="features" class="py-32 relative overflow-hidden">
+        <!-- Background Elements for Section -->
+        <div
+            class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none">
+        </div>
+        <div
+            class="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none">
+        </div>
+
+        <div class="container max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center max-w-3xl mx-auto mb-20 animate-on-scroll">
+                <div
+                    class="inline-block px-4 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-primary font-bold text-xs uppercase tracking-tighter mb-4">
+                    Altyapı & Teknoloji
+                </div>
+                <h2 class="font-display font-black text-4xl md:text-5xl lg:text-6xl text-gray-900 mb-6 tracking-tight">
+                    Sistem Hakkında <span class="text-primary italic">Detaylar</span>
+                </h2>
+                <div class="w-20 h-1.5 bg-primary mx-auto rounded-full mb-8"></div>
+                <p class="text-xl text-text-secondary leading-relaxed">
+                    Yüksek başarımlı kütüphane ve arşiv belgeleri için özelleştirilmiş
+                    yapay zeka destekli uçtan uca işleme çözümleri.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
+                <!-- Feature 1: SuryaOCR Engine -->
+                <div class="group relative">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[32px] -z-10">
+                    </div>
+                    <div
+                        class="h-full p-10 rounded-[32px] bg-white/60 backdrop-blur-md border border-gray-100 shadow-sm group-hover:shadow-2xl group-hover:shadow-primary/5 group-hover:-translate-y-2 transition-all duration-500">
+                        <div
+                            class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-3xl mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3 class="font-display font-black text-2xl text-gray-900 mb-4 tracking-tight">SuryaOCR Engine
+                        </h3>
+                        <p class="text-text-secondary mb-8 leading-relaxed">
+                            Transformer tabanlı modern derin öğrenme mimarisi. Tarihsel dokümanlar ve gazete
+                            sayfalarında bile %90'a varan karakter tanıma doğruluğu sağlar.
+                        </p>
+                        <div class="pt-6 border-t border-gray-100">
+                            <a href="/ocr-info"
+                                class="inline-flex items-center gap-2 text-primary font-extrabold hover:gap-4 transition-all uppercase tracking-widest text-xs">
+                                Detayları İncele <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 2: Ön İşleme Aracı -->
+                <div class="group relative">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[32px] -z-10">
+                    </div>
+                    <div
+                        class="h-full p-10 rounded-[32px] bg-white/60 backdrop-blur-md border border-gray-100 shadow-sm group-hover:shadow-2xl group-hover:shadow-blue-500/5 group-hover:-translate-y-2 transition-all duration-500">
+                        <div
+                            class="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600 text-3xl mb-8 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300 shadow-inner">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <h3 class="font-display font-black text-2xl text-gray-900 mb-4 tracking-tight">Ön İşleme Aracı
+                        </h3>
+                        <p class="text-text-secondary mb-8 leading-relaxed">
+                            Bozulmuş belgeler için adaptif temizlik. Gürültü giderme, sayfa düzeltme ve kontrast
+                            iyileştirme modelleri ile doküman kalitesini en üst seviyeye taşır.
+                        </p>
+                        <div class="pt-6 border-t border-gray-100">
+                            <a href="/preprocessing-info"
+                                class="inline-flex items-center gap-2 text-blue-600 font-extrabold hover:gap-4 transition-all uppercase tracking-widest text-xs">
+                                Aracı Keşfet <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature 3: Araştırma Çıktıları -->
+                <div class="group relative">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-gray-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[32px] -z-10">
+                    </div>
+                    <div
+                        class="h-full p-10 rounded-[32px] bg-white/60 backdrop-blur-md border border-gray-100 shadow-sm group-hover:shadow-2xl group-hover:shadow-gray-900/5 group-hover:-translate-y-2 transition-all duration-500">
+                        <div
+                            class="w-16 h-16 rounded-2xl bg-gray-900/10 flex items-center justify-center text-gray-900 text-3xl mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner">
+                            <img src="/static/o-ospa.png" alt="OSPA Logo" class="h-8 w-auto">
+                        </div>
+                        <h3 class="font-display font-black text-2xl text-gray-900 mb-4 tracking-tight">Modellerimiz ve
+                            Araştırma Çıktılarımız
+                        </h3>
+                        <p class="text-text-secondary mb-8 leading-relaxed">
+                            Proje kapsamında geliştirilen tüm yapay zeka modelleri, veri setleri ve akademik çıktılar
+                            bilim topluluğu ile açık kaynaklı olarak paylaşılmaktadır.
+                        </p>
+                        <div class="pt-6 border-t border-gray-100">
+                            <a href="https://ospa.iyte.edu.tr/#works" target="_blank"
+                                class="inline-flex items-center gap-2 text-gray-900 font-extrabold hover:gap-4 transition-all uppercase tracking-widest text-xs">
+                                Çalışmalara Göz At <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer matching React Component -->
+    <footer class="border-t border-gray-100 bg-white py-16 mt-auto w-full relative z-10">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+
+                <!-- Brand Section -->
+                <div class="flex flex-col gap-6">
+                    <a href="/" class="flex items-center group w-fit">
+                        <div class="relative">
+                            <img src="/static/logo.png" alt="OSPA Logo"
+                                class="h-14 w-auto object-contain relative z-10 filter drop-shadow-sm group-hover:drop-shadow-md transition-all duration-300">
+                            <div
+                                class="absolute inset-0 bg-primary/20 blur-xl rounded-full scale-0 group-hover:scale-150 transition-transform duration-500 -z-0 opacity-0 group-hover:opacity-40">
+                            </div>
+                        </div>
+                    </a>
+                    <p class="text-sm text-gray-500 font-medium leading-relaxed max-w-xs">
+                        1800-1950 dönemi için yapılandırılmış Prosopografik Dijital Biyografi Arşivi.
+                    </p>
+                </div>
+
+                <!-- Biz Kimiz? Section -->
+                <div class="flex flex-col gap-6">
+                    <h4 class="text-sm font-bold text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-2">
+                        Biz Kimiz?</h4>
+                    <ul class="flex flex-col gap-4">
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-globe w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Projemiz</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/#team" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-users w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Ekibimiz</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/#works" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-puzzle-piece w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">Çalışmalarımız</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/#team-section" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fas fa-envelope w-5 h-5 text-gray-400 group-hover:text-primary flex items-center justify-center"></i>
+                                </div>
+                                <span class="font-bold">İletişim</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Dış Bağlantılar Section -->
+                <div class="flex flex-col gap-6">
+                    <h4 class="text-sm font-bold text-gray-900 uppercase tracking-widest border-b border-gray-100 pb-2">
+                        Dış Bağlantılar</h4>
+                    <ul class="flex flex-col gap-4">
+                        <li>
+                            <a href="https://iyte.edu.tr/" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors overflow-hidden">
+                                    <img src="/static/iyte-logo.png" alt="İYTE"
+                                        class="h-[22px] w-auto object-contain transition-all contrast-125">
+                                </div>
+                                <span class="font-bold">İYTE</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://huggingface.co/dbbiyte" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg"
+                                        alt="Hugging Face" class="h-5 w-auto">
+                                </div>
+                                <span class="font-bold">HuggingFace</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://github.com/iytedbb" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <i
+                                        class="fab fa-github text-[18px] text-gray-400 group-hover:text-primary transition-colors"></i>
+                                </div>
+                                <span class="font-bold">GitHub</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://ospa.iyte.edu.tr/" target="_blank"
+                                class="group flex items-center gap-3 text-sm text-gray-500 hover:text-primary transition-all duration-300">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                                    <img src="/static/o-ospa.png" alt="OSPA"
+                                        class="h-5 w-auto grayscale group-hover:grayscale-0 transition-all">
+                                </div>
+                                <span class="font-bold">OSPA</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Bottom Section -->
+            <div
+                class="mt-16 border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-8">
+                <p class="text-[11px] font-medium text-gray-400 leading-relaxed max-w-2xl text-center md:text-left">
+                    © 323K372 NUMARALI TÜBİTAK 1001 Projesi | Osmanlı'dan Cumhuriyet'e Sosyo-Politik Ağ Analizi Yapay
+                    Zekâ Yoluyla Dönem Tanıklıklarını Yeniden Okumak (1900-1940)
+                </p>
+
+                <ul class="wrapper">
+                    <li class="icon twitter">
+                        <span class="tooltip">Twitter / X</span>
+                        <a href="https://x.com/iytedbb" target="_blank"
+                            class="flex items-center justify-center w-full h-full text-inherit no-underline">
+                            <i class="fab fa-x-twitter text-[18px]"></i>
+                        </a>
+                    </li>
+                    <li class="icon github">
+                        <span class="tooltip">GitHub</span>
+                        <a href="https://github.com/Panatios" target="_blank"
+                            class="flex items-center justify-center w-full h-full text-inherit no-underline">
+                            <i class="fab fa-github text-[18px]"></i>
+                        </a>
+                    </li>
+                    <li class="icon huggingface">
+                        <span class="tooltip">HuggingFace</span>
+                        <a href="https://huggingface.co/dbbiyte" target="_blank"
+                            class="flex items-center justify-center w-full h-full text-inherit no-underline">
+                            <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg" alt=""
+                                class="w-6 h-6">
+                        </a>
+                    </li>
+                    <li class="icon iyte">
+                        <span class="tooltip">İYTE</span>
+                        <a href="https://iyte.edu.tr/" target="_blank"
+                            class="flex items-center justify-center w-full h-full p-0">
+                            <img src="/static/iyte-logo.png" alt="İYTE"
+                                class="w-[28px] h-auto object-contain transition-all contrast-125">
+                        </a>
+                    </li>
+                    <li class="icon lab">
+                        <span class="tooltip">DBB Lab</span>
+                        <a href="https://dbb.iyte.edu.tr/" target="_blank"
+                            class="flex items-center justify-center w-full h-full p-0">
+                            <img src="/static/lab-icon.png" alt="Lab"
+                                class="w-[24px] h-auto object-contain opacity-70 group-hover:opacity-100 transition-opacity">
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTop"
+        class="fixed bottom-8 right-8 w-12 h-12 bg-primary text-white rounded-full shadow-xl shadow-primary/30 flex items-center justify-center text-xl translate-y-20 opacity-0 transition-all duration-500 hover:scale-110 hover:-translate-y-1 z-40">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+            // --- Neural Background Logic ---
+            (function () {
+                const canvas = document.getElementById('neural-canvas');
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                let nodes = [];
+                const nodeCount = 25;
+                let animationFrameId;
+
+                function resize() {
+                    const dpr = Math.min(window.devicePixelRatio, 2);
+                    canvas.width = window.innerWidth * dpr;
+                    canvas.height = window.innerHeight * dpr;
+                    canvas.style.width = window.innerWidth + 'px';
+                    canvas.style.height = window.innerHeight + 'px';
+                    ctx.scale(dpr, dpr);
+                }
+
+                function initNodes() {
+                    nodes = Array.from({ length: nodeCount }, () => ({
+                        x: Math.random() * window.innerWidth,
+                        y: Math.random() * window.innerHeight,
+                        vx: (Math.random() - 0.5) * 0.5,
+                        vy: (Math.random() - 0.5) * 0.5,
+                        radius: 3 + Math.random() * 2,
+                        phase: Math.random() * Math.PI * 2,
+                    }));
+                }
+
+                function animate() {
+                    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                    const time = Date.now() * 0.001;
+
+                    // Draw connections
+                    ctx.strokeStyle = 'rgba(185, 54, 50, 0.08)';
+                    ctx.lineWidth = 1;
+
+                    nodes.forEach((nodeA, i) => {
+                        nodes.slice(i + 1).forEach((nodeB) => {
+                            const dx = nodeA.x - nodeB.x;
+                            const dy = nodeA.y - nodeB.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+
+                            if (distance < 180) {
+                                const alpha = (1 - distance / 180) * 0.2;
+                                ctx.strokeStyle = `rgba(185, 54, 50, ${alpha})`;
+                                ctx.beginPath();
+                                ctx.moveTo(nodeA.x, nodeA.y);
+                                ctx.lineTo(nodeB.x, nodeB.y);
+                                ctx.stroke();
+                            }
+                        });
+                    });
+
+                    // Update and draw nodes
+                    nodes.forEach((node) => {
+                        node.x += node.vx;
+                        node.y += node.vy;
+
+                        if (node.x < 0 || node.x > window.innerWidth) node.vx *= -1;
+                        if (node.y < 0 || node.y > window.innerHeight) node.vy *= -1;
+
+                        const scale = 1 + Math.sin(time * 2 + node.phase) * 0.3;
+                        const alpha = 0.4 + Math.sin(time + node.phase) * 0.2;
+
+                        ctx.fillStyle = `rgba(185, 54, 50, ${alpha})`;
+                        ctx.beginPath();
+                        ctx.arc(node.x, node.y, node.radius * scale, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Simple glow
+                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = 'rgba(185, 54, 50, 0.3)';
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    });
+
+                    animationFrameId = requestAnimationFrame(animate);
+                }
+
+                window.addEventListener('resize', resize);
+                resize();
+                initNodes();
+                animate();
+            })();
+
+        // --- Interaction Logic ---
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const navbar = document.getElementById('navbar');
+        const scrollToTopBtn = document.getElementById('scrollToTop');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.remove('translate-x-full');
+        });
+
+        closeMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.add('translate-x-full');
+        });
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                // Keep the glass style but maybe adjust padding
+                navbar.classList.add('shadow-md');
+                scrollToTopBtn.classList.remove('translate-y-20', 'opacity-0');
+            } else {
+                navbar.classList.remove('shadow-md');
+                scrollToTopBtn.classList.add('translate-y-20', 'opacity-0');
+            }
+        });
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetElement = document.querySelector(this.getAttribute('href'));
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

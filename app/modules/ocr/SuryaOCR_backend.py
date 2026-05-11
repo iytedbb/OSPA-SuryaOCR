@@ -179,24 +179,29 @@ class SuryaProcessor:
                     print(f"✅ Model bulundu: {yolo_model_path}")
                     break
 
-            # Model yoksa huggingface'den indirmeyi veya cache'den kullanmayı dene
+            # Model yoksa detaylı uyarı ver
             if not yolo_model_path:
-                print(f"☁️ Yerel YOLO model bulunamadı, HuggingFace Hub önbelleği kontrol ediliyor...")
-                try:
-                    from huggingface_hub import hf_hub_download
-                    weight_path = hf_hub_download(
-                        repo_id="juliozhao/DocLayout-YOLO-DocStructBench",
-                        filename="doclayout_yolo_docstructbench_imgsz1024.pt",
-                    )
-                    yolo_model_path = Path(weight_path)
-                    print(f"✅ Model HuggingFace önbelleğinden bulundu: {yolo_model_path}")
-                except Exception as e:
-                    print(f"❌ YOLO modeli ne yerelde ne de HuggingFace'de bulunamadı: {e}")
-                    
-                    # Eğer tamamen başarısız olursa uyarı yapıp dön
-                    print(f"\n⚠️  Gazete tespiti çalışmayacak (normal OCR devam edecek)")
-                    self.gazete_processor = None
-                    return
+                print(f"❌ YOLO model hiçbir konumda bulunamadı!")
+                print(f"   Denenen konumlar:")
+                for path in possible_paths:
+                    print(f"   - {path.resolve()}")
+
+                # GitHub için indirme talimatları
+                suggested_path = backend_dir / ".." / "database" / "models"
+                print(f"\n📥 Model'i indirmek için:")
+                print(f"   1. Klasör oluşturun:")
+                print(f"      mkdir -p \"{suggested_path.resolve()}\"")
+                print(f"   2. Model'i indirin:")
+                if os.name == 'nt':  # Windows
+                    print(
+                        f"      curl -L -o \"{suggested_path.resolve()}/doclayout_yolo_docstructbench_imgsz1024.pt\" https://huggingface.co/juliozhao/DocLayout-YOLO-DocStructBench/resolve/main/doclayout_yolo_docstructbench_imgsz1024.pt")
+                else:  # Linux/Mac
+                    print(
+                        f"      wget -O \"{suggested_path.resolve()}/doclayout_yolo_docstructbench_imgsz1024.pt\" https://huggingface.co/juliozhao/DocLayout-YOLO-DocStructBench/resolve/main/doclayout_yolo_docstructbench_imgsz1024.pt")
+
+                print(f"\n⚠️  Gazete tespiti çalışmayacak (normal OCR devam edecek)")
+                self.gazete_processor = None
+                return
 
             # Gazete processor oluştur - UPDATED: Surya Layout desteği
             # layout_engine: "surya" veya "yolo" seçilebilir
@@ -2234,17 +2239,8 @@ class SuryaProcessor:
                     batch_idx_start = actual_current_page + i
                     
                     if filename:
-                        # Batch'deki ilk sayfa önizlemesi
-                        batch_preview = None
-                        try:
-                            if batch_images:
-                                preview_img = batch_images[0].copy()
-                                preview_img.thumbnail((600, 800))
-                                batch_preview = _create_base64_preview(preview_img)
-                        except: pass
-                        
                         ocr_prog = 20 + ((batch_idx_start - 1) * 50 / actual_total_pages) + 10
-                        update_progress(filename, ocr_prog, f'OCR çalışıyor (Batch {i//BATCH_SIZE + 1})...', batch_idx_start, actual_total_pages, preview_image_url=batch_preview)
+                        update_progress(filename, ocr_prog, f'OCR çalışıyor (Batch {i//BATCH_SIZE + 1})...', batch_idx_start, actual_total_pages)
 
                     # ============================================
                     # RTX 5000 OPTİMİZASYONU: inference_mode + AMP
@@ -2570,42 +2566,6 @@ class SuryaProcessor:
             # Önceki ve sonraki değerleri al
             prev_val = values[gap_start - 1] if gap_start > 0 else None
             next_val = values[gap_end] if gap_end < n else None
-
-            # --- BAŞLANGIÇTAKİ BOŞLUĞU DOLDURMA (Geriye Doğru Tahmin) ---
-            if gap_start == 0 and prev_val is None and next_val is not None:
-                # Geriye doğru sayarak 1. sayfanın ne olması gerektiğini bul
-                implied_start_page = next_val - gap_size
-                
-                # Eğer 1. sayfa < 1 çıkıyorsa (örn: 0 veya -1), bu demektir ki
-                # tespit edilen sıralama (next_val) kitabın/dosyanın başıyla uyumsuz.
-                # Bu durumda 1'den başlayarak doldur.
-                if implied_start_page <= 0:
-                     print(f"   ⚠️ Başlangıç boşluğu uyuşmazlığı: Tespit edilen {next_val}, 1. sayfanın {implied_start_page} olmasını gerektiriyor.")
-                     print("   🔄 Sıralama 1'den başlayacak şekilde düzeltiliyor (Fiziksel Sıra Önceliği)")
-                     
-                     for k in range(gap_start, gap_end):
-                         val = k + 1 
-                         values[k] = val
-                         results[k]['page_number'] = val
-                         fills += 1
-                     
-                     # Çakışma kontrolü: Eğer doldurduğumuz son değer, bir sonraki tespit edilen değere eşit veya büyükse
-                     last_filled = gap_end # values[gap_end-1]
-                     if last_filled >= next_val:
-                         print(f"   ⚠️ Çakışma düzeltildi: Tespit edilen {next_val} -> {last_filled + 1} olarak güncellendi.")
-                         values[gap_end] = last_filled + 1
-                         results[gap_end]['page_number'] = last_filled + 1
-                         # values dizisini güncelledik, sonraki iterasyonlarda bu yeni değeri kullanacağız.
-                
-                else:
-                    # Geriye doğru sayım mantıklı (1 veya daha büyük)
-                    # O zaman normal geriye doldurma yapalım
-                     for k in range(gap_start, gap_end):
-                         val = implied_start_page + k
-                         values[k] = val
-                         results[k]['page_number'] = val
-                         fills += 1
-                     print(f"   🔗 Geriye Doğru Doldurma (Start Page {implied_start_page}): PDF s.{gap_start+1}-{gap_end}")
 
             if prev_val is not None and next_val is not None:
                 actual_diff = next_val - prev_val
@@ -3103,36 +3063,6 @@ class SuryaProcessor:
         text = text.replace(r'\omega', 'ω')
         text = re.sub(r'\\[a-zA-Z]+', '', text)
 
-        # 5b. Emoji ve Gereksiz Unicode Sembol Temizliği
-        # Tarihi metinlerde OCR'ın halüsinasyon olarak ürettiği emoji/sembol karakterleri siler.
-        # Türkçe harfler, standart noktalama ve matematiksel semboller korunur.
-        emoji_pattern = re.compile(
-            "["
-            "\U0001F600-\U0001F64F"  # Emoticons (😀-🙏)
-            "\U0001F300-\U0001F5FF"  # Misc Symbols & Pictographs (🌀-🗿)
-            "\U0001F680-\U0001F6FF"  # Transport & Map Symbols (🚀-🛿)
-            "\U0001F1E0-\U0001F1FF"  # Flags (🇦-🇿)
-            "\U0001F900-\U0001F9FF"  # Supplemental Symbols (🤀-🧿)
-            "\U0001FA00-\U0001FA6F"  # Chess symbols etc.
-            "\U0001FA70-\U0001FAFF"  # Symbols Extended-A
-            "\U00002702-\U000027B0"  # Dingbats (✂-➰)
-            "\U000024C2-\U0001F251"  # Enclosed chars & misc
-            "\U0000FE00-\U0000FE0F"  # Variation Selectors
-            "\U0000200D"             # Zero Width Joiner
-            "\U00002640-\U00002642"  # Gender symbols
-            "\U00002600-\U000026FF"  # Misc Symbols (☀-⛿)
-            "\U00002700-\U000027BF"  # Dingbats
-            "\U0000231A-\U0000231B"  # Watch, Hourglass
-            "\U000023E9-\U000023F3"  # Media control
-            "\U000023F8-\U000023FA"  # Media control cont.
-            "\U0000200B"             # Zero Width Space
-            "\U0000FEFF"             # BOM
-            "\U0000FFFC-\U0000FFFD"  # Object replacement, replacement char
-            "]+",
-            flags=re.UNICODE
-        )
-        text = emoji_pattern.sub('', text)
-
         # 6. Gürültü Filtreleme
         noise_phrases = [
             r'\bmanufacture\s+file\b',
@@ -3360,9 +3290,6 @@ class SuryaProcessor:
                 raise FileNotFoundError(f"Dosya bulunamadı: {file_path}")
             filename = p.name
 
-            current_document_id = None
-            current_job_id = None
-
             # Veritabanı entegrasyonu
             if DATABASE_INTEGRATION_AVAILABLE and is_database_integration_enabled():
                 try:
@@ -3378,12 +3305,9 @@ class SuryaProcessor:
                         str(p), process_mode, output_formats, metadata=user_metadata
                     )
                     if processing_ids:
-                        current_document_id, current_job_id = processing_ids
-                        try:
-                            self.set_current_processing_ids(current_document_id, current_job_id)
-                        except AttributeError:
-                            pass
-                        print(f"📋 İşlem kaydedildi - Doc: {current_document_id}, Job: {current_job_id}")
+                        doc_id, job_id = processing_ids
+                        self.set_current_processing_ids(doc_id, job_id)
+                        print(f"📋 İşlem kaydedildi - Doc: {doc_id}, Job: {job_id}")
                 except Exception as db_error:
                     print(f"⚠️ Veritabanı hatası (işleme devam ediliyor): {db_error}")
 
@@ -3429,18 +3353,7 @@ class SuryaProcessor:
 
             total_pages = len(images)
             result['page_count'] = total_pages
-            
-            # İlk sayfa önizlemesi oluştur
-            first_page_preview = None
-            if images:
-                try:
-                    # Orijinal görüntüyü thumbnail yap
-                    preview_img = images[0].copy()
-                    preview_img.thumbnail((600, 800))
-                    first_page_preview = _create_base64_preview(preview_img)
-                except: pass
-            
-            update_progress(key_for_updates, 15, f'Dosya yüklendi: {total_pages} sayfa', 0, total_pages, preview_image_url=first_page_preview)
+            update_progress(key_for_updates, 15, f'Dosya yüklendi: {total_pages} sayfa', 0, total_pages)
 
             # --- İşleme Modu ---
             if process_mode == 'detection':
@@ -3555,10 +3468,7 @@ class SuryaProcessor:
                 except:
                     pass
                 finally:
-                    try:
-                        self.clear_current_processing_ids()
-                    except AttributeError:
-                        pass
+                    self.clear_current_processing_ids()
 
             return result
 
@@ -3578,10 +3488,7 @@ class SuryaProcessor:
                 except:
                     pass
                 finally:
-                    try:
-                        self.clear_current_processing_ids()
-                    except AttributeError:
-                        pass
+                    self.clear_current_processing_ids()
 
             return {'success': False, 'error': error_message}
 
@@ -3675,17 +3582,9 @@ class SuryaProcessor:
 
             base_progress = 20 + (page_idx * 50 / actual_total_pages)
 
-            # Sayfa önizlemesi
-            page_preview = None
-            try:
-                preview_img = image.copy()
-                preview_img.thumbnail((600, 800))
-                page_preview = _create_base64_preview(preview_img)
-            except: pass
-
             update_progress(filename, base_progress,
                             f'📰 Sayfa {actual_current_page} - Gazete layout analizi...',
-                            actual_current_page, actual_total_pages, preview_image_url=page_preview)
+                            actual_current_page, actual_total_pages)
 
             # --- GPU BELLEK YONETIMI (RTX 5000 Ada Optimized) ---
             try:
@@ -5401,7 +5300,7 @@ def get_layout_statistics():
         }), 200
 
 
-def update_progress(filename, progress, status, current_page=0, total_pages=0, error=False, preview_image_url=None):  # Hata bayrağı ve önizleme eklendi
+def update_progress(filename, progress, status, current_page=0, total_pages=0, error=False):  # Hata bayrağı eklendi
     """
     Geliştirilmiş progress tracking - SSE ile real-time güncelleme
     (MONOTONİK YAPI: Yüzde asla geri gitmez)
@@ -5423,8 +5322,7 @@ def update_progress(filename, progress, status, current_page=0, total_pages=0, e
             'error': True,
             'timestamp': now_ts,
             'last_update': now_ts,
-            'eta_text': 'Hata',
-            'preview_image_url': preview_image_url or prev.get('preview_image_url')
+            'eta_text': 'Hata'
         }
         processing_status[filename] = progress_data
         if filename in progress_queues:
@@ -5485,8 +5383,7 @@ def update_progress(filename, progress, status, current_page=0, total_pages=0, e
         'eta_start_time': prev['eta_start_time'],
         'timestamp': now_ts,
         'last_update': now_ts,
-        'error': False,  # Hata olmadığını belirt
-        'preview_image_url': preview_image_url or prev.get('preview_image_url')
+        'error': False  # Hata olmadığını belirt
     }
 
     # ETA hesapla

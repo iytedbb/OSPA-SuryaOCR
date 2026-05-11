@@ -221,7 +221,8 @@ function navigateTo(page) {
         records: 'Kayıtlar',
         authors: 'Yazarlar',
         search: 'Arama',
-        export: 'Export / Import'
+        export: 'Export / Import',
+        tools: 'Araçlar'
     };
     elements.pageTitle.textContent = titles[page] || page;
 
@@ -262,7 +263,7 @@ function initEventListeners() {
     elements.recordsType.addEventListener('change', loadRecords);
     elements.prevPageBtn.addEventListener('click', () => { currentPage--; loadRecords(); });
     elements.nextPageBtn.addEventListener('click', () => { currentPage++; loadRecords(); });
-    // elements.addRecordBtn.addEventListener('click', openNewRecordModal);
+    elements.addRecordBtn.addEventListener('click', openNewRecordModal);
 
     // Authors
     elements.authorsSearch.addEventListener('input', debounce(loadAuthors, 300));
@@ -309,7 +310,10 @@ function initEventListeners() {
         elements.fileViewerContainer.addEventListener('dblclick', toggleFullScreen);
     }
 
-    // Tools listeners removed
+    // Tools
+    elements.backupBtn.addEventListener('click', createBackup);
+    elements.vacuumBtn.addEventListener('click', vacuumDatabase);
+    elements.findDuplicatesBtn.addEventListener('click', findDuplicates);
 
     // Modal
     elements.closeModalBtn.addEventListener('click', closeModal);
@@ -784,7 +788,7 @@ function openNewRecordModal() {
     elements.recordType.value = 'book';
     elements.recordYear.value = '';
     elements.recordPublisher.value = '';
-    if (elements.recordPageCount) elements.recordPageCount.value = '';
+    elements.recordPages.value = '';
     elements.recordVolume.value = '';
     elements.recordEdition.value = '';
     elements.recordEditor.value = '';

@@ -79,42 +79,6 @@ const useOCR = () => {
         return () => clearInterval(interval);
     }, [processing, processingStartTime]);
 
-    // Check for preprocessed job on load
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const preprocessedJobId = urlParams.get('preprocessed_job_id');
-
-        if (preprocessedJobId) {
-            console.log("Preprocessed Job ID detected:", preprocessedJobId);
-            showNotification('Ön işlenmiş dosya algılandı, bilgiler alınıyor...');
-
-            axios.get(`/api/preprocessed-info/${preprocessedJobId}`)
-                .then(response => {
-                    const data = response.data;
-                    if (data.success) {
-                        setUploadedFileInfo({
-                            job_id: preprocessedJobId,
-                            file_path: data.output_file_path,
-                            filename: data.original_filename,
-                            page_count: data.page_count,
-                            is_preprocessed: true
-                        });
-                        setSelectedFile({ name: data.original_filename });
-                        setProcessingType('normal');
-                        setCompletedSteps(prev => [...new Set([...prev, 0])]);
-                        setCurrentStep(1);
-                        showNotification(`'${data.original_filename}' hazır.`);
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                })
-                .catch(error => {
-                    console.error("Error fetching preprocessed info:", error);
-                    showNotification('Ön işlenmiş dosya bilgisi alınamadı.', 'error');
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                });
-        }
-    }, [showNotification]);
-
     const handleFileUpload = async (file) => {
         if (!file) {
             setSelectedFile(null);
@@ -206,11 +170,10 @@ const useOCR = () => {
                 setCurrentPage(data.current_page || 0);
                 setTotalPages(data.total_pages || 0);
 
-                if (data.eta_text || data.preview_image_url) {
+                if (data.eta_text) {
                     setLiveStats(prev => ({
                         ...prev,
-                        remainingTimeText: data.eta_text || prev.remainingTimeText,
-                        preview_image_url: data.preview_image_url || prev.preview_image_url
+                        remainingTimeText: data.eta_text
                     }));
                 }
             } catch (error) {

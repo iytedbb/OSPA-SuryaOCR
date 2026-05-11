@@ -591,7 +591,7 @@ def get_record(record_id):
             SELECT 
                 -- Temel Alanlar
                 d.id, d.title, d.author, d.metadata_type, 
-                d.language, d.country, d.citation_style, d.url,
+                d.language, d.country, d.citation_style, d.description, d.url,
                 
                 -- Tarih ve Zaman
                 d.publication_year, d.date, d.access_date, 
@@ -680,7 +680,7 @@ def create_record():
 
         query = """
             INSERT INTO documents (
-                id, title, author, metadata_type, language, citation_style, url,
+                id, title, author, metadata_type, language, citation_style, description, url,
                 publication_year, date, access_date,
                 publisher, publication_city, country, edition, volume, 
                 page_count, pages, isbn, series, series_title, series_text, editor,
@@ -690,7 +690,7 @@ def create_record():
                 archive, archive_location, library_catalog, call_number, rights,
                 created_at, updated_at
             ) VALUES (
-                :id, :title, :author, :metadata_type, :language, :citation_style, :url,
+                :id, :title, :author, :metadata_type, :language, :citation_style, :description, :url,
                 :publication_year, :date, :access_date,
                 :publisher, :publication_city, :country, :edition, :volume, 
                 :page_count, :pages, :isbn, :series, :series_title, :series_text, :editor,
@@ -710,6 +710,7 @@ def create_record():
             "metadata_type": data.get('metadata_type', 'book'),
             "language": data.get('language'),
             "citation_style": data.get('citation_style'),
+            "description": data.get('description'),
             "url": data.get('url'),
             
             # Tarih
@@ -782,7 +783,7 @@ def update_record(record_id):
         
         # Güncellenebilir alanlar listesi (DB şemasına uygun)
         updatable_fields = [
-            'title', 'author', 'metadata_type', 'language', 'country', 'citation_style', 'url',
+            'title', 'author', 'metadata_type', 'language', 'country', 'citation_style', 'description', 'url',
             'publication_year', 'date', 'access_date',
             'publisher', 'publication_city', 'edition', 'volume', 
             'page_count', 'pages', 'isbn', 'series', 'series_title', 'series_text', 'editor',
@@ -1098,7 +1099,7 @@ def export_json():
             SELECT 
                 d.id, d.title, d.author, d.metadata_type,
                 d.publication_year, d.page_count, d.volume,
-                d.publisher, d.edition, d.editor,
+                d.publisher, d.edition, d.editor, d.description,
                 d.created_at,
                 (SELECT markdown_content FROM ocr_results WHERE document_id = d.id LIMIT 1) as markdown,
                 (SELECT xml_content FROM ocr_results WHERE document_id = d.id LIMIT 1) as xml,
@@ -1128,11 +1129,12 @@ def export_json():
                 "publisher": row[7],
                 "edition": row[8],
                 "editor": row[9],
-                "created_at": row[10].isoformat() if row[10] else None,
-                "markdown_content": row[11],
-                "xml_content": row[12],
+                "description": row[10],
+                "created_at": row[11].isoformat() if row[11] else None,
+                "markdown_content": row[12],
+                "xml_content": row[13],
                 # YENİ EKLENEN ALAN
-                "date": row[13].isoformat() if row[13] else None 
+                "date": row[14].isoformat() if row[14] else None 
             }
             export_data["records"].append(record)
         

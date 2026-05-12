@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iytedbb/OSPA-SuryaOCR"><img src="https://img.shields.io/badge/GitHub-Repository-181717?logo=github" alt="GitHub"></a>
+  <a href="https://github.com/iytedbb"><img src="https://img.shields.io/badge/GitHub-Repository-181717?logo=github" alt="GitHub"></a>
   <a href="https://huggingface.co/dbbiyte"><img src="https://img.shields.io/badge/HuggingFace-Models-FFD21E?logo=huggingface&logoColor=black" alt="HuggingFace"></a>
 </p>
 

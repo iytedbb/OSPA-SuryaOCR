@@ -102,9 +102,9 @@ The journey begins by preparing the document. We tackle common historical challe
 
 Before reading a single letter, the system understands the page arrangement. The pipeline offers two high-performance options, with **[Surya 0.17 Layout Engine](https://github.com/datalab-to/surya)** being the default preferred choice for historical text precision. Users can manually switch to **[DocLayout-YOLO](https://github.com/opendatalab/DocLayout-YOLO)**, which remains highly effective for complex, multi-column newspaper structures.
 
-|                  Book Layout (Ziya Paşa)                  |                Close-up Detection                  |
+|                  Book Layout                              |                Close-up Detection                  |
 |:---------------------------------------------------------:|:--------------------------------------------------:|
-| <img src="assets/layout_ornek_ziya_pasa.png" width="380"/>| <img src="assets/layout_ornek_yakindan.png" width="380"/> |
+| <img src="assets/layout_ornek.png" width="380"/>| <img src="assets/layout_ornek_yakindan.png" width="380"/> |
 
 The engine identifies distinct region types — `Picture`, `PageHeader`, `Caption`, `SectionHeader`, `Text` — and assigns confidence scores to each detected zone, enabling specialized downstream handling per region type.
 

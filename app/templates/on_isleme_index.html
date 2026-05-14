@@ -10,50 +10,8 @@
     <!-- Progressive Web App meta tags -->
     <meta name="theme-color" content="#1a202c">
     <meta name="description" content="YOLO tabanlı düzen tespiti ile profesyonel PDF belge işleme">
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            DEFAULT: '#b93632',
-                            dark: '#8e2825',
-                            light: '#d64d48',
-                            50: '#fef2f2',
-                            20: 'rgba(185, 54, 50, 0.2)'
-                        },
-                        cream: '#fdfbf7',
-                        text: {
-                            main: '#2d3436',
-                            secondary: '#636e72',
-                        }
-                    },
-                    fontFamily: {
-                        display: ['"Space Grotesk"', 'sans-serif'],
-                        body: ['"Inter"', 'sans-serif'],
-                        mono: ['"JetBrains Mono"', 'monospace'],
-                    },
-                    animation: {
-                        'spin-slow': 'spin 8s linear infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                        'slideUp': 'slideUp 0.8s ease-out both',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-20px)' },
-                        },
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Tailwind CSS (Offline) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind_compiled.css') }}">
 
     <!-- Modern CSS with CSS Variables and Grid -->
     <style>
@@ -2583,19 +2541,68 @@
                     this.showProcessing(true, 'Dosya yükleniyor (Ön İşleme)...');
                     this.updateProcessingStep('step-upload', 'active');
 
-                    // --- MODIFICATION: Use the correct upload endpoint ---
-                    const response = await fetch(`${this.apiBase}/upload`, { // Use this.apiBase
-                        method: 'POST',
-                        body: formData
+                    // --- MODIFICATION: Use XMLHttpRequest for upload progress ---
+                    const self = this;
+                    const result = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        const startTime = Date.now();
+
+                        xhr.upload.onprogress = (progressEvent) => {
+                            if (progressEvent.lengthComputable) {
+                                const loaded = progressEvent.loaded;
+                                const total = progressEvent.total;
+                                const progress = Math.round((loaded * 100) / total);
+
+                                const elapsedTime = (Date.now() - startTime) / 1000;
+                                let speed = 0;
+                                let remainingTimeText = '';
+
+                                if (elapsedTime > 0) {
+                                    speed = loaded / elapsedTime;
+                                    const remainingBytes = total - loaded;
+                                    if (speed > 0) {
+                                        const remainingSeconds = remainingBytes / speed;
+                                        remainingTimeText = remainingSeconds < 60
+                                            ? Math.round(remainingSeconds) + ' sn'
+                                            : Math.floor(remainingSeconds / 60) + ' dk ' + Math.round(remainingSeconds % 60) + ' sn';
+                                    }
+                                }
+
+                                const mbLoaded = (loaded / (1024 * 1024)).toFixed(2);
+                                const mbTotal = (total / (1024 * 1024)).toFixed(2);
+
+                                self.updateProgress(progress);
+                                self.processingMessage.textContent = `Yükleniyor: ${mbLoaded} MB / ${mbTotal} MB`;
+                                if (remainingTimeText && self.timeEstimate) {
+                                    self.timeEstimate.textContent = `Kalan Süre: ${remainingTimeText}`;
+                                }
+                            }
+                        };
+
+                        xhr.addEventListener('load', () => {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                try {
+                                    resolve(JSON.parse(xhr.responseText));
+                                } catch (e) {
+                                    reject(new Error('Geçersiz sunucu yanıtı'));
+                                }
+                            } else {
+                                let errorMsg = 'Dosya yükleme hatası';
+                                try {
+                                    const errData = JSON.parse(xhr.responseText);
+                                    errorMsg = errData.error || errData.detail || errorMsg;
+                                } catch (e) { }
+                                reject(new Error(errorMsg));
+                            }
+                        });
+
+                        xhr.addEventListener('error', () => {
+                            reject(new Error('Ağ hatası oluştu'));
+                        });
+
+                        xhr.open('POST', `${this.apiBase}/upload`);
+                        xhr.send(formData);
                     });
-                    // --- END MODIFICATION ---
-
-                    if (!response.ok) {
-                        // ... (existing error handling) ...
-                        throw new Error(errorMessage);
-                    }
-
-                    const result = await response.json();
 
                     this.handleFileProvided(result.file_path, result.job_id); // Pass job_id too
                     // --- END MODIFICATION ---

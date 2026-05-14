@@ -19,32 +19,8 @@
         rel="stylesheet">
 
     <!-- Tailwind CSS Play CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            DEFAULT: '#B93632',
-                            dark: '#962825',
-                            light: '#d64d49',
-                            50: '#fef2f2',
-                        },
-                        cream: '#FDFBF7',
-                    },
-                    fontFamily: {
-                        display: ['Space Grotesk', 'sans-serif'],
-                        body: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    animation: {
-                        'watermark-slow': 'watermark-float 20s infinite alternate ease-in-out',
-                    },
-                }
-            }
-        }
-    </script>
+    <!-- Tailwind CSS (Offline) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind_compiled.css') }}">
 
     <style>
         /* CSS Reset with Modern Approach */
@@ -3393,6 +3369,8 @@
             const [processingPreviewUrl, setProcessingPreviewUrl] = useState(null);
             const lastFetchedPageRef = useRef(0);
             const [isUploading, setIsUploading] = useState(false);
+            const [uploadProgress, setUploadProgress] = useState(0);
+            const [uploadStats, setUploadStats] = useState({ loaded: 0, total: 0, speed: 0, remainingTime: null });
 
             const handleLayoutEngineChange = async (engine) => {
                 try {
@@ -3779,16 +3757,61 @@
 
             const uploadFile = async (file) => {
                 setIsUploading(true); // <-- YENİ EKLENDİ
+                setUploadProgress(0);
+                setUploadStats({ loaded: 0, total: 0, speed: 0, remainingTime: null });
                 try {
                     const formData = new FormData();
                     formData.append('file', file);
 
-                    const response = await fetch(`${API_BASE_URL}/upload`, {
-                        method: 'POST',
-                        body: formData
+                    const response = await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        const startTime = Date.now();
+
+                        xhr.upload.onprogress = (progressEvent) => {
+                            if (progressEvent.lengthComputable) {
+                                const loaded = progressEvent.loaded;
+                                const total = progressEvent.total;
+                                const progress = Math.round((loaded * 100) / total);
+                                setUploadProgress(progress);
+
+                                const elapsedTime = (Date.now() - startTime) / 1000;
+                                let speed = 0;
+                                let remainingTime = null;
+
+                                if (elapsedTime > 0) {
+                                    speed = loaded / elapsedTime;
+                                    const remainingBytes = total - loaded;
+                                    if (speed > 0) {
+                                        remainingTime = remainingBytes / speed;
+                                    }
+                                }
+
+                                setUploadStats({
+                                    loaded,
+                                    total,
+                                    speed,
+                                    remainingTime
+                                });
+                            }
+                        };
+
+                        xhr.addEventListener('load', () => {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                resolve({ ok: true, data: JSON.parse(xhr.responseText) });
+                            } else {
+                                resolve({ ok: false, data: JSON.parse(xhr.responseText) });
+                            }
+                        });
+
+                        xhr.addEventListener('error', () => {
+                            reject(new Error('Network error occurred during upload'));
+                        });
+
+                        xhr.open('POST', `${API_BASE_URL}/upload`);
+                        xhr.send(formData);
                     });
 
-                    const data = await response.json(); // data = uploadedFileInfo
+                    const data = response.data; // data = uploadedFileInfo
 
                     if (response.ok) {
                         setUploadedFileInfo(data);
@@ -5174,6 +5197,65 @@
                                         }}>
                                             Dosya Sunucuya Yükleniyor...
                                         </h3>
+
+                                        {/* Progress Bar Container */}
+                                        <div style={{ maxWidth: '400px', margin: '0 auto var(--space-4)' }}>
+                                            <div style={{
+                                                width: '100%',
+                                                background: 'var(--gray-200)',
+                                                borderRadius: 'var(--radius-full)',
+                                                height: '12px',
+                                                overflow: 'hidden',
+                                                position: 'relative'
+                                            }}>
+                                                <div style={{
+                                                    background: 'var(--gradient-primary)',
+                                                    height: '100%',
+                                                    width: `${uploadProgress || 0}%`,
+                                                    borderRadius: 'var(--radius-full)',
+                                                    transition: 'width 0.3s ease'
+                                                }}></div>
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: 0, left: 0, right: 0, bottom: 0,
+                                                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
+                                                    animation: 'scanAnimation 2s linear infinite'
+                                                }}></div>
+                                            </div>
+
+                                            <div style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                marginTop: 'var(--space-2)',
+                                                fontSize: '0.85rem',
+                                                fontWeight: '700',
+                                                fontFamily: 'var(--font-mono)',
+                                                color: 'var(--gray-600)'
+                                            }}>
+                                                <span style={{ color: 'var(--primary-red)' }}>{uploadProgress || 0}%</span>
+                                                {uploadStats && uploadStats.total > 0 && (
+                                                    <span>
+                                                        {(uploadStats.loaded / (1024 * 1024)).toFixed(2)} MB / {(uploadStats.total / (1024 * 1024)).toFixed(2)} MB
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {uploadStats && uploadStats.remainingTime !== null && (
+                                                <div style={{
+                                                    marginTop: 'var(--space-2)',
+                                                    fontSize: '0.9rem',
+                                                    color: 'var(--gray-500)',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    Kalan Süre: <span style={{ color: 'var(--gray-700)' }}>
+                                                        {uploadStats.remainingTime < 60
+                                                            ? `${Math.round(uploadStats.remainingTime)} sn`
+                                                            : `${Math.floor(uploadStats.remainingTime / 60)} dk ${Math.round(uploadStats.remainingTime % 60)} sn`}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
                                         <p style={{
                                             color: 'var(--gray-600)',
                                             fontSize: '1.1rem',
@@ -5182,12 +5264,6 @@
                                             fontFamily: 'var(--font-mono)'
                                         }}>
                                             {selectedFile?.name}
-                                        </p>
-                                        <p style={{
-                                            color: 'var(--gray-500)',
-                                            lineHeight: '1.6'
-                                        }}>
-                                            Dosya boyutu ve bağlantı hızınıza bağlı olarak bu işlem biraz zaman alabilir. Lütfen bekleyin.
                                         </p>
                                     </div>
                                 )}
@@ -5523,7 +5599,7 @@
                                         style={{ fontSize: '1.1rem' }}
                                     >
                                         <i className="fas fa-save"></i>
-                                        {metadataType ? 'Metadata\'yı Kaydet ve Devam Et' : 'Metadata\'sız Devam Et'}
+                                        {metadataType ? 'Metadata'yı Kaydet ve Devam Et' : 'Metadata'sız Devam Et'}
                                     </button>
                                 </div>
                             </div>
